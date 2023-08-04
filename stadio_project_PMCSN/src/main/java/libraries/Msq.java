@@ -1,4 +1,4 @@
-package main;/* -------------------------------------------------------------------------
+package libraries;/* -------------------------------------------------------------------------
  * This program is a next-event simulation of a multi-server, single-queue
  * service node.  The service node is assumed to be initially idle, no
  * arrivals are permitted after the terminal time STOP and the node is then
@@ -12,7 +12,6 @@ package main;/* ----------------------------------------------------------------
  * ------------------------------------------------------------------------- 
  */
 
-import java.io.*;
 import java.lang.*;
 import java.text.*;
 

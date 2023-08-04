@@ -1,4 +1,4 @@
-package main;/* -------------------------------------------------------------------------
+package libraries;/* -------------------------------------------------------------------------
  * This program is a next-event simulation of a single-server FIFO service
  * node using Exponentially distributed interarrival times and Uniformly
  * distributed service times (i.e., a M/U/1 queue).  The service node is
@@ -14,7 +14,6 @@ package main;/* ----------------------------------------------------------------
  * ------------------------------------------------------------------------- 
  */
 
-import java.io.*;
 import java.lang.*;
 import java.text.*;
 
