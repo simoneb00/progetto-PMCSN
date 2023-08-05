@@ -28,6 +28,9 @@ public class Constants {
     // probability of skipping second perquisition
     public static final double P5 = 0.3;
 
+    // ---- TIME SLOT PERCENTAGE ----
+    public static final double [] PERCENTAGE = { 0.20, 0.70, 0.10};
+
     // ---- ARRIVAL RATES [req/sec]----
     // first time window rate
     public static final double LAMBDA1 = 0.24044;

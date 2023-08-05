@@ -37,7 +37,7 @@ import java.io.*;
 import java.util.*;
 
 
-class Rngs {
+public class Rngs {
 
   long MODULUS      = 2147483647; /* DON'T CHANGE THIS VALUE                  */
   long MULTIPLIER   = 48271;      /* DON'T CHANGE THIS VALUE                  */
