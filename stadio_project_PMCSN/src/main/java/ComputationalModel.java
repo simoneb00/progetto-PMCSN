@@ -31,126 +31,241 @@ class MsqT {
 
 class MsqSum {                      /* accumulated sums of                */
     double service;                   /*   service times                    */
-    long   served;                    /*   number served                    */
+    long served;                    /*   number served                    */
 }
 
-class MsqEvent{                     /* the next-event list    */
+class MsqEvent {                     /* the next-event list    */
     double t;                         /*   next event time      */
-    int    x;                         /*   event status, 0 or 1 */
+    int x;                         /*   event status, 0 or 1 */
 }
 
 
 class Msq {
-    static double START   = 0.0;            /* initial (open the door)        */
-    static double STOP    = 20000.0;        /* terminal (close the door) time */
-    static int    SERVERS = 4;              /* number of servers              */
+    static double START = 0.0;            /* initial (open the door)        */
+    static double STOP = 20000.0;        /* terminal (close the door) time */
+    static int SERVERS = 4;              /* number of servers              */
 
     static double sarrival = START;
 
-    static List<TimeSlot> slotlist = new ArrayList<TimeSlot>();
+    static List<TimeSlot> slotList = new ArrayList<>();
 
     public static void main(String[] args) {
 
-        long   numberTicketCheck = 0;   /* number in the ticket check node    */
-        long   numberPerquisition = 0;  /* number in the perquisition node    */
-        int    e;                      /* next event index                    */
-        int    s;                      /* server index                        */
-        long   index  = 0;             /* used to count processed jobs        */
+        int streamIndex = 1;
+        long numberTicketCheck = 0;   /* number in the ticket check node    */
+        long numberPerquisition = 0;  /* number in the perquisition node    */
+        int e;                      /* next event index                    */
+        int s;                      /* server index                        */
+        long indexPerquisition = 0;            /* used to count processed jobs in perquisition        */
+        long indexTicketCheck = 0;             /* used to count processed jobs in ticket check        */
         double area = 0.0;
-        double areaTicketCheck   = 0.0;           /* time integrated number in the node */
-        double areaPerquisition   = 0.0;           /* time integrated number in the node */
+        double areaTicketCheck = 0.0;           /* time integrated number in the node */
+        double areaPerquisition = 0.0;           /* time integrated number in the node */
         double service;
         long abandonTicketCheck = 0;
         long abandonPerquisition = 0;
+        List<Double> abandonsTicket = new ArrayList<>();
+        List<Double> abandonsPerquisition = new ArrayList<>();
+        double firstCompletionTicketCheck = 0;
+        double firstCompletionPerquisition = 0;
 
         Msq m = new Msq();
         Rngs r = new Rngs();
         r.plantSeeds(0);
 
-        for (int f=0 ; f< 3; f++){
-            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 1013, 3600*f, 3600*(f+1)-1);
-            slotlist.add(slot);
+
+        for (int f = 0; f < 3; f++) {
+            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 1013, 3600 * f, 3600 * (f + 1) - 1);
+            slotList.add(slot);
         }
 
-        MsqEvent [] event = new MsqEvent [ALL_EVENTS_VIP_TICKET+ALL_EVENTS_VIP_PERQUISITION];
-        MsqSum [] sum = new MsqSum [ALL_EVENTS_VIP_TICKET+ALL_EVENTS_VIP_PERQUISITION];
-        for (s = 0; s < ALL_EVENTS_VIP_TICKET+ALL_EVENTS_VIP_PERQUISITION; s++) {
+        MsqEvent[] event = new MsqEvent[ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION];
+        MsqSum[] sum = new MsqSum[ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION];
+        for (s = 0; s < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION; s++) {
             event[s] = new MsqEvent();
-            sum [s]  = new MsqSum();
+            sum[s] = new MsqSum();
         }
 
         MsqT t = new MsqT();
 
-        t.current    = START;
-        event[0].t   = m.getArrival(r);
-        event[0].x   = 1;
-        for (s = 1; s < ALL_EVENTS_VIP_TICKET+ALL_EVENTS_VIP_PERQUISITION; s++) {
-            event[s].t     = START;          /* this value is arbitrary because */
-            event[s].x     = 0;              /* all servers are initially idle  */
+        t.current = START;
+        event[0].t = m.getArrival(r, t.current);
+        event[0].x = 1;
+        for (s = 1; s < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION; s++) {
+            event[s].t = START;          /* this value is arbitrary because */
+            event[s].x = 0;              /* all servers are initially idle  */
             sum[s].service = 0.0;
-            sum[s].served  = 0;
+            sum[s].served = 0;
         }
 
         while ((event[0].x != 0) || (numberTicketCheck + numberPerquisition != 0)) {
-            e         = m.nextEvent(event);                /* next event index */
-            t.next    = event[e].t;                        /* next event time  */
-            areaTicketCheck     += (t.next - t.current) * numberTicketCheck;     /* update integral  */
-            areaPerquisition += (t.next - t.current) * numberPerquisition;     /* update integral  */
-            t.current = t.next;                            /* advance the clock*/
 
-            if (e == ARRIVAL_EVENT_TICKET-1) {                                  /* process an arrival*/
+            // TODO aree
+
+            if (!abandonsTicket.isEmpty()) {
+                event[ABBOND_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
+                event[ABBOND_EVENT_VIP_TICKET].x = 1;     // activate abandon
+            } else {
+                event[ABBOND_EVENT_VIP_TICKET].x = 0;     // deactivate abandon
+            }
+
+            if (!abandonsPerquisition.isEmpty()){
+                event[ABBOND_EVENT_VIP_PERQUISITION + 5].t = abandonsPerquisition.get(0);  //TODO migliora
+                event[ABBOND_EVENT_VIP_PERQUISITION + 5].x = 1;
+            } else {
+                event[ABBOND_EVENT_VIP_PERQUISITION + 5].x = 0;
+            }
+
+            e = m.nextEvent(event);                                         /* next event index */
+            t.next = event[e].t;                                            /* next event time  */
+            areaTicketCheck += (t.next - t.current) * numberTicketCheck;    /* update integral  */
+            areaPerquisition += (t.next - t.current) * numberPerquisition;  /* update integral  */
+            t.current = t.next;                                             /* advance the clock*/
+
+            if (e == ARRIVAL_EVENT_VIP_TICKET - 1) {     /* process an arrival */
                 numberTicketCheck++;
-                //TODO FASCE ORARIE SU GET ARRIVAL, SETTA I LAMBDA
-                event[0].t        = m.getArrival(r);
+                event[0].t = m.getArrival(r, t.current);
                 if (event[0].t > STOP)
-                    event[0].x      = 0;
+                    event[0].x = 0;
                 if (numberTicketCheck <= DEPARTURE_EVENT_VIP_TICKET) {
-                    //TODO GET SERVICE ESPONENZIALE
-                    service         = m.getService(r);
-                    s               = m.findOne(event);
+                    service = m.getService(r, 1/V_TC_SR);
+                    s = m.findOne(event);
                     sum[s].service += service;
                     sum[s].served++;
-                    event[s].t      = t.current + service;
-                    event[s].x      = 1;
+                    event[s].t = t.current + service;
+                    event[s].x = 1;
                 }
             }
-            // todo modella il servizio del biglietto e gli abbandoni con gen. random
-            else {                                         /* process a departure */
-                index++;                                     /* from server s       */
-                number--;
-                s                 = e;
-                if (number >= SERVERS) {
-                    service         = m.getService(r);
+            else if (e == ABBOND_EVENT_VIP_TICKET) {    // process an abandon ( = 1 )
+                numberTicketCheck--;
+                abandonTicketCheck++;
+                abandonsTicket.remove(0);
+            }
+
+            else if (e == ALL_EVENTS_VIP_TICKET){      /* process a departure (i.e. arrival to vip perquisition) */
+
+                // generate, with probability P6, an abandon
+                boolean abandon = generateAbandon(r, streamIndex, P6);
+                if (abandon) {  // add an abandon
+                    double abandonTime = t.current + 0.01;  // this will be the next abandon time (it must be small in order to execute the abandon as next event)
+                    abandonsTicket.add(abandonTime);
+                } else {    // arrival in the next servant (single server queue, perquisition)
+
+                    event[ALL_EVENTS_VIP_TICKET].x = 0;
+
+                    if (numberPerquisition == 1) {  // there is a job to process
+                        sum[ALL_EVENTS_VIP_TICKET+ARRIVAL_EVENT_VIP_PERQUISIION].served++;
+                        service = m.getService(r, 1/V_P_SR);
+                        sum[ALL_EVENTS_VIP_TICKET+ARRIVAL_EVENT_VIP_PERQUISIION].service += service;
+                        event[ALL_EVENTS_VIP_TICKET+ARRIVAL_EVENT_VIP_PERQUISIION].t = t.current + service;
+                        event[ALL_EVENTS_VIP_TICKET+ARRIVAL_EVENT_VIP_PERQUISIION].x = 1;
+
+                        if (firstCompletionPerquisition == 0)
+                            firstCompletionPerquisition = t.current;
+                    }
+                }
+            }
+
+            else if (e == ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION) {    // departure from perquisition
+                boolean abandon = generateAbandon(r, streamIndex, P7);
+                if (abandon) {
+                    double abandonTime = t.current + 0.01;
+                    abandonsPerquisition.add(abandonTime);
+                } else {
+                    numberPerquisition--;
+                    indexPerquisition++;
+                    s = e;
+
+                    if (numberPerquisition >= DEPARTURE_EVENT_VIP_PERQUISITION) {
+                        service = m.getService(r, 1/V_P_SR);
+                        sum[s].service += service;
+                        sum[s].served++;
+                        event[s].t = t.current + service;
+                    } else {
+                        event[s].x = 0;
+                    }
+                }
+            }
+
+            else if (e == ABBOND_EVENT_VIP_PERQUISITION + 5) {
+                numberPerquisition--;
+                abandonPerquisition++;
+                abandonsPerquisition.remove(0);
+            }
+
+            else {
+                if (firstCompletionTicketCheck == 0)
+                    firstCompletionTicketCheck = t.current;
+                indexTicketCheck++;                                     /* departure from ticket check */
+                numberTicketCheck--;
+                s = e;
+                event[ALL_EVENTS_VIP_TICKET].t = t.current;
+                event[ALL_EVENTS_VIP_TICKET].x = 1;
+                numberPerquisition++;
+
+                if (numberTicketCheck >= DEPARTURE_EVENT_VIP_TICKET) {     // there are jobs in queue
+                    service = m.getService(r, 1/V_TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
-                    event[s].t      = t.current + service;
-                }
-                else
-                    event[s].x      = 0;
+                    event[s].t = t.current + service;
+                } else
+                    event[s].x = 0;
             }
         }
 
         DecimalFormat f = new DecimalFormat("###0.00");
         DecimalFormat g = new DecimalFormat("###0.000");
 
-        System.out.println("\nfor " + index + " jobs the service node statistics are:\n");
-        System.out.println("  avg interarrivals .. =   " + f.format(event[0].t / index));
-        System.out.println("  avg wait ........... =   " + f.format(area / index));
-        System.out.println("  avg # in node ...... =   " + f.format(area / t.current));
+        System.out.println("\nfor " + indexTicketCheck + " jobs the VIP ticket check statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(event[ARRIVAL_EVENT_TICKET-1].t / indexTicketCheck));
+        System.out.println("  avg wait ........... =   " + f.format(areaTicketCheck / indexTicketCheck));
+
+        double ticketCheckFinalTime = 0;
+        double ticketCheckMean = 0;
+        for (s = 2; s <= DEPARTURE_EVENT_VIP_TICKET+1; s++) {
+            ticketCheckMean += event[s].t;
+            if (event[s].t > ticketCheckFinalTime)
+                ticketCheckFinalTime = event[s].t;
+        }
+
+        double ticketCheckActualTime = ticketCheckFinalTime - firstCompletionTicketCheck;
+
+        System.out.println("  avg # in node ...... =   " + f.format(areaTicketCheck / ticketCheckActualTime));
+
+
+        for (s = 2; s <= DEPARTURE_EVENT_VIP_TICKET + 1; s++)          /* adjust area to calculate */
+            area -= sum[s].service;              /* averages for the queue   */
+
+
+        System.out.println("");
+
+        // TODO come sopra
+
+        System.out.println("\nfor " + indexTicketCheck + " jobs the VIP perquisition statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(event[ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION - 1].t  / indexPerquisition));
+        System.out.println("  avg wait ........... =   " + f.format(areaPerquisition / indexPerquisition));
+        System.out.println("  avg # in node ...... =   " + f.format(areaPerquisition / t.current));
 
         for (s = 1; s <= SERVERS; s++)          /* adjust area to calculate */
             area -= sum[s].service;              /* averages for the queue   */
 
-        System.out.println("  avg delay .......... =   " + f.format(area / index));
-        System.out.println("  avg # in queue ..... =   " + f.format(area / t.current));
+        System.out.println("  avg delay .......... =   " + f.format(areaPerquisition / indexPerquisition));
+        System.out.println("  avg # in queue ..... =   " + f.format(areaPerquisition / t.current));
         System.out.println("\nthe server statistics are:\n");
         System.out.println("    server     utilization     avg service      share");
         for (s = 1; s <= SERVERS; s++) {
             System.out.print("       " + s + "          " + g.format(sum[s].service / t.current) + "            ");
-            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double)index));
+            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTicketCheck));
         }
 
         System.out.println("");
+    }
+
+
+    // this function generate a true value with (percentage * 100) % probability, oth. false
+    static boolean generateAbandon(Rngs rngs, int streamIndex, double percentage) {
+        rngs.selectStream(1 + streamIndex);
+        return rngs.random() <= percentage;
     }
 
 
@@ -170,27 +285,30 @@ class Msq {
         return (a + (b - a) * r.random());
     }
 
-    double getArrival(Rngs r) {
+    double getArrival(Rngs r, double currentTime) {
         /* --------------------------------------------------------------
-         * generate the next arrival time, with rate 1/2
+         * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
         r.selectStream(0);
-        sarrival += exponential(2.0, r);
+
+        int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
+
+        sarrival += exponential(1 / slotList.get(index).getAveragePoisson(), r);
         return (sarrival);
     }
 
 
-    double getService(Rngs r) {
+    double getService(Rngs r, double serviceRate) {
         /* ------------------------------
          * generate the next service time, with rate 1/6
          * ------------------------------
          */
-        r.selectStream(1);
-        return (uniform(2.0, 10.0, r));
+        r.selectStream(3);
+        return (exponential(serviceRate, r));
     }
 
-    int nextEvent(MsqEvent [] event) {
+    int nextEvent(MsqEvent[] event) {
         /* ---------------------------------------
          * return the index of the next event type
          * ---------------------------------------
@@ -201,7 +319,7 @@ class Msq {
         while (event[i].x == 0)       /* find the index of the first 'active' */
             i++;                        /* element in the event list            */
         e = i;
-        while (i < ALL_EVENTS_VIP_TICKET+ALL_EVENTS_VIP_PERQUISITION-1) {         /* now, check the others to find which  */
+        while (i < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION - 1) {         /* now, check the others to find which  */
             i++;                        /* event type is most imminent          */
             if ((event[i].x == 1) && (event[i].t < event[e].t))
                 e = i;
@@ -209,7 +327,7 @@ class Msq {
         return (e);
     }
 
-    int findOne(MsqEvent [] event) {
+    int findOne(MsqEvent[] event) {
         /* -----------------------------------------------------
          * return the index of the available server idle longest
          * -----------------------------------------------------
@@ -220,9 +338,8 @@ class Msq {
         while (event[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-        //todo why +1, why i starts from 1?
-        while (i < DEPARTURE_EVENT_VIP_TICKET+1) {         /* now, check the others to find which   */
-            i++;                        /* has been idle longest                 */
+        while (i < DEPARTURE_EVENT_VIP_TICKET + 1) {         /* now, check the others to find which   */
+            i++;                                             /* has been idle longest                 */
             if ((event[i].x == 0) && (event[i].t < event[s].t))
                 s = i;
         }
