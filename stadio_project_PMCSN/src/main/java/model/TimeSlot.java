@@ -17,7 +17,7 @@ public class TimeSlot {
 
     public double getAveragePoisson() {
         averagePoisson = percentage * dailyArrival;
-        return averagePoisson;
+        return averagePoisson/3600;
     }
 
     public double getPercentage() {

@@ -134,7 +134,7 @@ class Msq {
                 }
             }
             else if (e == ABBOND_EVENT_VIP_TICKET) {    // process an abandon ( = 1 )
-                numberTicketCheck--;
+                //  numberTicketCheck isn't decremented, cause the abbandon happen after the check
                 abandonTicketCheck++;
                 abandonsTicket.remove(0);
             }
@@ -185,7 +185,7 @@ class Msq {
             }
 
             else if (e == ABBOND_EVENT_VIP_PERQUISITION + 5) {
-                numberPerquisition--;
+                //  numberPerquisition isn't decremented, cause the abbandon happen after the perquisition
                 abandonPerquisition++;
                 abandonsPerquisition.remove(0);
             }
@@ -318,10 +318,13 @@ class Msq {
         int e;
         int i = 0;
 
-        while (event[i].x == 0)       /* find the index of the first 'active' */
-            i++;                        /* element in the event list            */
+        while (event[i].x == 0 && i<6) {      /* find the index of the first 'active' */
+            i++;                       /* element in the event list            */
+            if ( i == 7)
+                System.out.println("ao");
+        }
         e = i;
-        while (i < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION - 1) {         /* now, check the others to find which  */
+        while (i < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION -1) {         /* now, check the others to find which  */
             i++;                        /* event type is most imminent          */
             if ((event[i].x == 1) && (event[i].t < event[e].t))
                 e = i;
@@ -335,12 +338,13 @@ class Msq {
          * -----------------------------------------------------
          */
         int s;
-        int i = 1;
+        // i starts from 2 cause servers are on index 2 and 3
+        int i = 2;
 
         while (event[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-        while (i < DEPARTURE_EVENT_VIP_TICKET + 1) {         /* now, check the others to find which   */
+        while (i <= DEPARTURE_EVENT_VIP_TICKET + 1) {         /* now, check the others to find which   */
             i++;                                             /* has been idle longest                 */
             if ((event[i].x == 0) && (event[i].t < event[s].t))
                 s = i;
