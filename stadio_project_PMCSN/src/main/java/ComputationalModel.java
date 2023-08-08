@@ -42,9 +42,7 @@ class MsqEvent {                     /* the next-event list    */
 
 class Msq {
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 20000.0;        /* terminal (close the door) time */
-    static int SERVERS = 4;              /* number of servers              */
-
+    static double STOP = 3 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -100,8 +98,6 @@ class Msq {
 
         while ((event[0].x != 0) || (numberTicketCheck + numberPerquisition != 0)) {
 
-            // TODO aree
-
             if (!abandonsTicket.isEmpty()) {
                 event[ABBOND_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
                 event[ABBOND_EVENT_VIP_TICKET].x = 1;     // activate abandon
@@ -123,6 +119,7 @@ class Msq {
             t.current = t.next;                                             /* advance the clock*/
 
             if (e == ARRIVAL_EVENT_VIP_TICKET - 1) {     /* process an arrival */
+
                 numberTicketCheck++;
                 event[0].t = m.getArrival(r, t.current);
                 if (event[0].t > STOP)
@@ -232,31 +229,36 @@ class Msq {
 
         System.out.println("  avg # in node ...... =   " + f.format(areaTicketCheck / ticketCheckActualTime));
 
+        System.out.println("# abandons: " + abandonTicketCheck);
 
         for (s = 2; s <= DEPARTURE_EVENT_VIP_TICKET + 1; s++)          /* adjust area to calculate */
             area -= sum[s].service;              /* averages for the queue   */
 
+        System.out.println("\nthe server statistics are:\n");
+        System.out.println("    server     utilization     avg service      share");
+        for (s = 2; s <= DEPARTURE_EVENT_VIP_TICKET + 1; s++) {
+            // todo vedere se con t.current cambia o va meglio
+            System.out.print("       " + (s - 1) + "          " + g.format(sum[s].service / ticketCheckActualTime) + "            ");
+            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTicketCheck));
+        }
 
         System.out.println("");
 
-        // TODO come sopra
+        double perquisitionActualTime = event[5].t - firstCompletionPerquisition;
 
-        System.out.println("\nfor " + indexTicketCheck + " jobs the VIP perquisition statistics are:\n");
-        System.out.println("  avg interarrivals .. =   " + f.format(event[ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION - 1].t  / indexPerquisition));
+        System.out.println("\nfor " + indexPerquisition + " jobs the VIP perquisition statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(perquisitionActualTime  / indexPerquisition));
         System.out.println("  avg wait ........... =   " + f.format(areaPerquisition / indexPerquisition));
-        System.out.println("  avg # in node ...... =   " + f.format(areaPerquisition / t.current));
+        System.out.println("  avg # in node ...... =   " + f.format(areaPerquisition / perquisitionActualTime));
 
-        for (s = 1; s <= SERVERS; s++)          /* adjust area to calculate */
-            area -= sum[s].service;              /* averages for the queue   */
+        System.out.println("# abandons = " + abandonPerquisition);
 
-        System.out.println("  avg delay .......... =   " + f.format(areaPerquisition / indexPerquisition));
-        System.out.println("  avg # in queue ..... =   " + f.format(areaPerquisition / t.current));
+        areaPerquisition -= sum[5].service;              /* averages for the queue   */
+
         System.out.println("\nthe server statistics are:\n");
         System.out.println("    server     utilization     avg service      share");
-        for (s = 1; s <= SERVERS; s++) {
-            System.out.print("       " + s + "          " + g.format(sum[s].service / t.current) + "            ");
-            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTicketCheck));
-        }
+        System.out.print("       " + 1 + "          " + g.format(sum[5].service / perquisitionActualTime) + "            ");
+        System.out.println(f.format(sum[5].service / sum[5].served) + "         " + g.format(sum[5].served / (double) indexPerquisition));
 
         System.out.println("");
     }
@@ -290,7 +292,7 @@ class Msq {
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(0);
+        r.selectStream(4);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
 
