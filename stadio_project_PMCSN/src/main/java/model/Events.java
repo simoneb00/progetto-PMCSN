@@ -4,7 +4,7 @@ public class Events {
     //---- VIP EVENTS ----
     // Ticket check
     public static final int ARRIVAL_EVENT_VIP_TICKET = 1;
-    public static final int DEPARTURE_EVENT_VIP_TICKET = 2;
+    public static final int DEPARTURE_EVENT_VIP_TICKET = 4; // todo change
     public static final int ABBOND_EVENT_VIP_TICKET = 1;
 
     // Perquisition

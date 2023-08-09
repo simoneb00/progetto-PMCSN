@@ -52,10 +52,10 @@ public class Constants {
     public static final double T_SR = 10;
 
     // VIP ticket check
-    public static final double V_TC_SR = 40;
+    public static final double V_TC_SR = 40;    // todo changed
 
     // VIP perquisition
-    public static final double V_P_SR = 60;
+    public static final double V_P_SR = 60;     // todo changed
 
 
 }
