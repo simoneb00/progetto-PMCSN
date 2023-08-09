@@ -96,13 +96,20 @@ class Msq {
             sum[s].served = 0;
         }
 
+        /*  TODO
+         *  issues to be fixed:
+         *  * some seeds still trigger IndexOutOfBoundException
+         *  * the second ticket check server does not receive jobs
+         *  * some strange things with certain seeds (e.g. 543)
+         */
+
         while ((event[0].x != 0) || (numberTicketCheck + numberPerquisition != 0)) {
 
             if (!abandonsTicket.isEmpty()) {
-                event[ABBOND_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
-                event[ABBOND_EVENT_VIP_TICKET].x = 1;     // activate abandon
+                event[ABBOND_EVENT_VIP_TICKET + 2].t = abandonsTicket.get(0);
+                event[ABBOND_EVENT_VIP_TICKET + 2].x = 1;     // activate abandon
             } else {
-                event[ABBOND_EVENT_VIP_TICKET].x = 0;     // deactivate abandon
+                event[ABBOND_EVENT_VIP_TICKET + 2].x = 0;     // deactivate abandon
             }
 
             if (!abandonsPerquisition.isEmpty()){
@@ -133,7 +140,8 @@ class Msq {
                     event[s].x = 1;
                 }
             }
-            else if (e == ABBOND_EVENT_VIP_TICKET) {    // process an abandon ( = 1 )
+            // todo fix attempt: changing abandon index from 1 to 3 (i.e., putting servants at indexes 1 and 2), this should be ok
+            else if (e == ABBOND_EVENT_VIP_TICKET + 2) {    // process an abandon ( = 3 )
                 numberTicketCheck--;
                 abandonTicketCheck++;
                 abandonsTicket.remove(0);
@@ -292,11 +300,12 @@ class Msq {
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(4);
+        r.selectStream(0);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
 
-        sarrival += exponential(1 / slotList.get(index).getAveragePoisson(), r);
+        // todo fix attempt: changed parameter (this should be ok)
+        sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
         return (sarrival);
     }
 
@@ -307,7 +316,8 @@ class Msq {
          * ------------------------------
          */
         r.selectStream(3);
-        return (exponential(serviceRate, r));
+        // todo fix attempt: changed parameter (this should be ok)
+        return (exponential(1 / serviceRate, r));
     }
 
     int nextEvent(MsqEvent[] event) {
@@ -335,12 +345,13 @@ class Msq {
          * -----------------------------------------------------
          */
         int s;
+
         int i = 1;
 
         while (event[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-        while (i < DEPARTURE_EVENT_VIP_TICKET + 1) {         /* now, check the others to find which   */
+        while (i <= DEPARTURE_EVENT_VIP_TICKET) {         /* now, check the others to find which   */
             i++;                                             /* has been idle longest                 */
             if ((event[i].x == 0) && (event[i].t < event[s].t))
                 s = i;
