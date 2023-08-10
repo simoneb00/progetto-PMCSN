@@ -9,7 +9,7 @@ public class Events {
 
     // Perquisition
     public static final int ARRIVAL_EVENT_VIP_PERQUISIION = 1;
-    public static final int DEPARTURE_EVENT_VIP_PERQUISITION = 1;
+    public static final int DEPARTURE_EVENT_VIP_PERQUISITION = 6;
     public static final int ABBOND_EVENT_VIP_PERQUISITION = 1;
 
 
