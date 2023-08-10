@@ -254,7 +254,7 @@ class Msq {
 
         System.out.println("");
 
-        double perquisitionActualTime = event[5].t - firstCompletionPerquisition;
+        double perquisitionActualTime = event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].t - firstCompletionPerquisition;   // todo fix attempt: it was event[5]
 
         System.out.println("\nfor " + indexPerquisition + " jobs the VIP perquisition statistics are:\n");
         System.out.println("  avg interarrivals .. =   " + f.format(perquisitionActualTime  / indexPerquisition));
@@ -263,12 +263,12 @@ class Msq {
 
         System.out.println("# abandons = " + abandonPerquisition);
 
-        areaPerquisition -= sum[5].service;              /* averages for the queue   */
+        areaPerquisition -= sum[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].service;              /* averages for the queue   */
 
         System.out.println("\nthe server statistics are:\n");
         System.out.println("    server     utilization     avg service      share");
-        System.out.print("       " + 1 + "          " + g.format(sum[5].service / perquisitionActualTime) + "            ");
-        System.out.println(f.format(sum[5].service / sum[5].served) + "         " + g.format(sum[5].served / (double) indexPerquisition));
+        System.out.print("       " + 1 + "          " + g.format(sum[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].service / perquisitionActualTime) + "            ");
+        System.out.println(f.format(sum[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].service / sum[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].served) + "         " + g.format(sum[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION].served / (double) indexPerquisition));
 
         System.out.println("");
     }
