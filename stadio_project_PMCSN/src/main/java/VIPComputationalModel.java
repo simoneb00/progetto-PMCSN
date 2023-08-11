@@ -24,23 +24,23 @@ import static model.Constants.*;
 import static model.Events.*;
 
 
-class MsqT {
+class VIPMsqT {
     double current;                   /* current time                       */
     double next;                      /* next (most imminent) event time    */
 }
 
-class MsqSum {                      /* accumulated sums of                */
+class VIPMsqSum {                      /* accumulated sums of                */
     double service;                   /*   service times                    */
     long served;                    /*   number served                    */
 }
 
-class MsqEvent {                     /* the next-event list    */
+class VIPMsqEvent {                     /* the next-event list    */
     double t;                         /*   next event time      */
     int x;                         /*   event status, 0 or 1 */
 }
 
 
-class Msq {
+class VIPMsq {
     static double START = 0.0;            /* initial (open the door)        */
     static double STOP = 3 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
@@ -67,7 +67,7 @@ class Msq {
         double firstCompletionTicketCheck = 0;
         double firstCompletionPerquisition = 0;
 
-        Msq m = new Msq();
+        VIPMsq m = new VIPMsq();
         Rngs r = new Rngs();
         r.plantSeeds(0);
 
@@ -77,14 +77,14 @@ class Msq {
             slotList.add(slot);
         }
 
-        MsqEvent[] event = new MsqEvent[ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION];
-        MsqSum[] sum = new MsqSum[ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION];
+        VIPMsqEvent[] event = new VIPMsqEvent[ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION];
+        VIPMsqSum[] sum = new VIPMsqSum[ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION];
         for (s = 0; s < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION; s++) {
-            event[s] = new MsqEvent();
-            sum[s] = new MsqSum();
+            event[s] = new VIPMsqEvent();
+            sum[s] = new VIPMsqSum();
         }
 
-        MsqT t = new MsqT();
+        VIPMsqT t = new VIPMsqT();
 
         t.current = START;
         event[0].t = m.getArrival(r, t.current);
@@ -102,17 +102,17 @@ class Msq {
         while ((event[0].x != 0) || (numberTicketCheck + numberPerquisition != 0)) {
 
             if (!abandonsTicket.isEmpty()) {
-                event[DEPARTURE_EVENT_VIP_TICKET + ABBOND_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
-                event[DEPARTURE_EVENT_VIP_TICKET + ABBOND_EVENT_VIP_TICKET].x = 1;     // activate abandon
+                event[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
+                event[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].x = 1;     // activate abandon
             } else {
-                event[DEPARTURE_EVENT_VIP_TICKET + ABBOND_EVENT_VIP_TICKET].x = 0;     // deactivate abandon
+                event[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].x = 0;     // deactivate abandon
             }
 
             if (!abandonsPerquisition.isEmpty()){
-                event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABBOND_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);  //TODO migliora
-                event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABBOND_EVENT_VIP_PERQUISITION].x = 1;
+                event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);  //TODO migliora
+                event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 1;
             } else {
-                event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABBOND_EVENT_VIP_PERQUISITION].x = 0;
+                event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 0;
             }
 
             e = m.nextEvent(event);                                         /* next event index */
@@ -136,14 +136,15 @@ class Msq {
                     event[s].x = 1;
                 }
             }
-            // todo fix attempt: changing abandon index from 1 to 3 (i.e., putting servants at indexes 1 and 2), this should be ok
-            else if (e == DEPARTURE_EVENT_VIP_TICKET + ABBOND_EVENT_VIP_TICKET) {    // process an abandon
+
+            else if (e == DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET) {    // process an abandon
                 //numberTicketCheck--;
                 abandonTicketCheck++;
                 abandonsTicket.remove(0);
             }
 
             else if (e == ALL_EVENTS_VIP_TICKET){      /* process a departure (i.e. arrival to vip perquisition) */
+
 
                 // generate, with probability P6, an abandon
                 boolean abandon = generateAbandon(r, streamIndex, P6);
@@ -205,7 +206,7 @@ class Msq {
                 }
             }
 
-            else if (e == ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABBOND_EVENT_VIP_PERQUISITION) {
+            else if (e == ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION) {
                 numberPerquisition--;
                 abandonPerquisition++;
                 abandonsPerquisition.remove(0);
@@ -346,7 +347,7 @@ class Msq {
         return (exponential(1 / serviceRate, r));
     }
 
-    int nextEvent(MsqEvent[] event) {
+    int nextEvent(VIPMsqEvent[] event) {
         /* ---------------------------------------
          * return the index of the next event type
          * ---------------------------------------
@@ -365,7 +366,7 @@ class Msq {
         return (e);
     }
 
-    int findOneTicketCheck(MsqEvent[] event) {
+    int findOneTicketCheck(VIPMsqEvent[] event) {
         /* -----------------------------------------------------
          * return the index of the available server idle longest
          * -----------------------------------------------------
@@ -385,7 +386,7 @@ class Msq {
         return (s);
     }
 
-    int findOnePerquisition(MsqEvent[] event) {
+    int findOnePerquisition(VIPMsqEvent[] event) {
         /* -----------------------------------------------------
          * return the index of the available server idle longest
          * -----------------------------------------------------
