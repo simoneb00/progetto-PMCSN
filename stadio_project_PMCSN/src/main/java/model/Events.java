@@ -25,13 +25,13 @@ public class Events {
     public static final int ABANDON_EVENT_FIRST_PERQUISITION = 1;
 
     // Turnstiles
-    public static final int ARRIVAL_EVENT_TURNSTILES = 1;
-    public static final int DEPARTURE_EVENT_TURNSTILES = 1;
+    public static final int ARRIVAL_EVENT_TURNSTILES = 8;
+    public static final int DEPARTURE_EVENT_TURNSTILES = 8;
 
 
     // Second perquisition
     public static final int ARRIVAL_EVENT_SECOND_PERQUISIION = 1;
-    public static final int DEPARTURE_EVENT_SECOND_PERQUISITION = 1;
+    public static final int DEPARTURE_EVENT_SECOND_PERQUISITION = 2;
     public static final int ABANDON_EVENT_SECOND_PERQUISITION = 1;
 
     // ---- ALL EVENTS ----
