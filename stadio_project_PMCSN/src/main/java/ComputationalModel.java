@@ -60,13 +60,13 @@ class Msq {
         /* processed jobs counter for every node */
         long indexTicketCheck = 0;
         long indexFirstPerquisition = 0;
-        long indexTurnstiles = 0;
+        long[] indexTurnstiles = {0, 0, 0, 0, 0, 0, 0, 0};
         long indexSecondPerquisition = 0;
 
         /* time integrated number for every node */
         double areaTicketCheck = 0.0;
         double areaFirstPerquisition = 0.0;
-        double areaTurnstiles = 0.0;
+        double[] areaTurnstiles = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         double areaSecondPerquisition = 0.0;
 
         double service;     /* it will contain the service times */
@@ -88,7 +88,7 @@ class Msq {
         /* first completion for every node */
         double ticketCheckFirstCompletion = 0;
         double firstPerquisitionFirstCompletion = 0;
-        double turnstilesFirstCompletion = 0;
+        double[] turnstilesFirstCompletion = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};;
         double secondPerquisitionFirstCompletion = 0;
 
         Msq m = new Msq();
@@ -175,13 +175,16 @@ class Msq {
             /* update integrals */
             areaTicketCheck += (t.next - t.current) * numberTicketCheck;
             areaFirstPerquisition += (t.next - t.current) * numberFirstPerquisition;
+            for (int i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
+                areaTurnstiles[i] += (t.next - t.current) * numberTurnstiles[i];
+            }
 
-            /* todo: is this correct? */
+            /* todo: is this correct?
             long totalNumberTurnstiles = 0;
             for (long num : numberTurnstiles) {
                 totalNumberTurnstiles += num;
             }
-            areaTurnstiles += (t.next - t.current) * totalNumberTurnstiles;
+            areaTurnstiles += (t.next - t.current) * totalNumberTurnstiles; */
 
             areaSecondPerquisition += (t.next - t.current) * numberSecondPerquisition;
 
@@ -310,10 +313,13 @@ class Msq {
             } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES) && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES)) {
 
                 /* service at the turnstile with index (e - 20) */
-                indexTurnstiles++;
                 int index = e - 20;
+                indexTurnstiles[index]++;
                 numberTurnstiles[index]--;
                 populationTurnstiles--;
+
+                if (turnstilesFirstCompletion[index] == 0)
+                    turnstilesFirstCompletion[index] = t.current;
 
                 /* generate an arrival at the second perquisition center */
                 events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t = t.current;
@@ -332,9 +338,12 @@ class Msq {
 
             } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES) {
 
+                events[e].x = 0;
+
                 /* arrival at the second perquisition node */
                 boolean skip = generateAbandon(r, streamIndex, P5);
                 if (skip) {
+                    skipCounterSecondPerquisition++;
                     continue;
                 } else {
                     /* no skip, the job enters the node */
@@ -450,7 +459,134 @@ class Msq {
 
         System.out.println("");
 
+
+        /* FIRST PERQUISITION */
+
+        System.out.println("\nfor " + indexFirstPerquisition + " jobs the first perquisition statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET].t / indexFirstPerquisition));
+        System.out.println("  avg wait ........... =   " + f.format(areaFirstPerquisition / indexFirstPerquisition));
+
+        double firstPerquisitionFinalTime = 0;
+        double firstPerquisitionMean = 0;
+        for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION; s++) {
+            firstPerquisitionMean += events[s].t;
+            if (events[s].t > firstPerquisitionFinalTime)
+                firstPerquisitionFinalTime = events[s].t;
+        }
+
+        double firstPerquisitionActualTime = firstPerquisitionFinalTime - firstPerquisitionFirstCompletion;
+
+        System.out.println("  avg # in node ...... =   " + f.format(areaFirstPerquisition / firstPerquisitionActualTime));
+
+        System.out.println("# abandons: " + abandonsCounterFirstPerquisition);
+        System.out.println("# skips: " + skipCounterFirstPerquisition);
+
+        for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION; s++)          /* adjust area to calculate */
+            areaFirstPerquisition -= sum[s].service;                                                                     /* averages for the queue   */
+
+        System.out.println("\nthe server statistics are:\n");
+        System.out.println("    server     utilization     avg service      share");
+        for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION; s++) {
+            System.out.print("       " + (s - ALL_EVENTS_TICKET) + "          " + g.format(sum[s].service / firstPerquisitionActualTime) + "            ");
+            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexFirstPerquisition));
+        }
+
+        System.out.println("");
+
+
+        /* TURNSTILES */
+
+        long totalIndexTurnstiles = 0;        /* all jobs processed considering all turnstiles */
+        for (long val : indexTurnstiles) {
+            totalIndexTurnstiles += val;
+        }
+
+        int i = 0;
+
+        /* the mean interarrival time is computed averaging the every server's mean interarrival time */
+        double allTurnstilesInterarrivals = 0.0;
+        for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
+            allTurnstilesInterarrivals += events[ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + i].t / indexTurnstiles[i];
+        }
+        double turnstilesMeanInterarrivals = allTurnstilesInterarrivals / DEPARTURE_EVENT_TURNSTILES;
+
+        /* the average wait is computed averaging every server's average wait */
+        double allTurnstilesWaitTimes = 0.0;
+        for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
+            allTurnstilesWaitTimes += areaTurnstiles[i] / indexTurnstiles[i];
+        }
+        double turnstileAverageWait = allTurnstilesWaitTimes / DEPARTURE_EVENT_TURNSTILES;
+
+
+        /* the average population is computed averaging every server's average population (to do this we need all actual times) */
+        double[] turnstilesFinalTimes = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
+            turnstilesFinalTimes[i] = events[ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + i].t;
+        }
+
+        double[] turnstilesActualTimes = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
+            turnstilesActualTimes[i] = turnstilesFinalTimes[i] - turnstilesFirstCompletion[i];
+        }
+
+        double allTurnstilesAveragePopulations = 0.0;
+        for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
+            allTurnstilesAveragePopulations += areaTurnstiles[i] / turnstilesActualTimes[i];
+        }
+        double turnstilesAveragePopulation = allTurnstilesAveragePopulations / DEPARTURE_EVENT_TURNSTILES;
+
+
+        System.out.println("\nfor " + totalIndexTurnstiles + " jobs the first perquisition statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(turnstilesMeanInterarrivals));
+        System.out.println("  avg wait ........... =   " + f.format(turnstileAverageWait));
+        System.out.println("  avg # in node ...... =   " + f.format(turnstilesAveragePopulation));
+
+        System.out.println("\nthe server statistics are:\n");
+        System.out.println("    server     utilization     avg service      share");
+        for (s = ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + ARRIVAL_EVENT_TURNSTILES ; s < ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES; s++) {
+            int index = s - ALL_EVENTS_TICKET - DEPARTURE_EVENT_TICKET - ARRIVAL_EVENT_TURNSTILES;
+            System.out.print("       " + (index) + "          " + g.format(sum[s].service / turnstilesActualTimes[index]) + "            ");
+            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTurnstiles[index]));
+        }
+
+
+        /* SECOND PERQUISITION */
+
+        System.out.println("\nfor " + indexSecondPerquisition + " jobs the second perquisition statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t / indexSecondPerquisition));
+        System.out.println("  avg wait ........... =   " + f.format(areaSecondPerquisition / indexSecondPerquisition));
+
+        double secondPerquisitionFinalTime = 0;
+        double secondPerquisitionMean = 0;
+        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION; s++) {
+            secondPerquisitionMean += events[s].t;
+            if (events[s].t > secondPerquisitionFinalTime)
+                secondPerquisitionFinalTime = events[s].t;
+        }
+
+        double secondPerquisitionActualTime = secondPerquisitionFinalTime - secondPerquisitionFirstCompletion;
+
+        System.out.println("  avg # in node ...... =   " + f.format(areaSecondPerquisition / secondPerquisitionActualTime));
+
+        System.out.println("# abandons: " + abandonsCounterSecondPerquisition);
+        System.out.println("# skips: " + skipCounterSecondPerquisition);
+
+        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION; s++)
+                                                                                                                         /* adjust area to calculate */
+            areaSecondPerquisition -= sum[s].service;                                                                    /* averages for the queue   */
+
+        System.out.println("\nthe server statistics are:\n");
+        System.out.println("    server     utilization     avg service      share");
+        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION; s++) {
+            System.out.print("       " + (s - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION - ALL_EVENTS_TURNSTILES) + "          " + g.format(sum[s].service / secondPerquisitionActualTime) + "            ");
+            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexSecondPerquisition));
+        }
+
+        System.out.println("");
+
     }
+
+
 
     // this function generate a true value with (percentage * 100) % probability, oth. false
     static boolean generateAbandon(Rngs rngs, int streamIndex, double percentage) {
