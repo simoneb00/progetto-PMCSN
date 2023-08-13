@@ -1,6 +1,7 @@
 import libraries.Rngs;
 import model.TimeSlot;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,7 +98,7 @@ class Msq {
         /* time slots initialization */
 
         for (int f = 0; f < 3; f++) {
-            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 1013, 3600 * f, 3600 * (f + 1) - 1);
+            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 12062, 3600 * f, 3600 * (f + 1) - 1);
             slotList.add(slot);
         }
 
@@ -145,10 +146,6 @@ class Msq {
 
         /* START ITERATION */
         while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + populationTurnstiles + numberSecondPerquisition != 0)) {
-
-            for (long num: numberTurnstiles) {
-                populationTurnstiles += num;
-            }
 
             /* abandons */
             if (!abandonsTicketCheck.isEmpty()) {
@@ -235,8 +232,9 @@ class Msq {
                     skipCounterFirstPerquisition++;
 
                     /* the first perquisition is skipped, so we generate an arrival at the turnstiles */
-                    events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t = t.current;
-                    events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].x = 1;
+                    s = m.findOneTurnstiles(numberTurnstiles, events);
+                    events[s].t = t.current;
+                    events[s].x = 1;
 
                 } else {
                     /* no abandon -> arrival at the first perquisition */
@@ -261,8 +259,8 @@ class Msq {
 
                 /* generate an arrival to one of the turnstiles */
                 s = m.findOneTurnstiles(numberTurnstiles, events);
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + s].t = t.current;
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + s].x = 1;
+                events[s].t = t.current;
+                events[s].x = 1;
 
                 /* if there's queue, put a job on service on this server */
                 s = e;
@@ -315,6 +313,7 @@ class Msq {
                 indexTurnstiles++;
                 int index = e - 20;
                 numberTurnstiles[index]--;
+                populationTurnstiles--;
 
                 /* generate an arrival at the second perquisition center */
                 events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t = t.current;
@@ -403,9 +402,53 @@ class Msq {
                     events[s].x = 0;
                 }
             }
+
+            /* this is used to keep track of jobs in the turnstiles servers */
+            populationTurnstiles = 0;
+            for (long num: numberTurnstiles) {
+                populationTurnstiles += num;
+            }
         }
 
         System.out.println("END OF ITERATION");
+
+        /* the code below prints the simulation's statistics, for every node */
+
+        DecimalFormat f = new DecimalFormat("###0.00");
+        DecimalFormat g = new DecimalFormat("###0.000");
+
+
+        /* TICKET CHECK */
+
+        System.out.println("\nfor " + indexTicketCheck + " jobs the ticket check statistics are:\n");
+        System.out.println("  avg interarrivals .. =   " + f.format(events[ARRIVAL_EVENT_TICKET-1].t / indexTicketCheck));
+        System.out.println("  avg wait ........... =   " + f.format(areaTicketCheck / indexTicketCheck));
+
+        double ticketCheckFinalTime = 0;
+        double ticketCheckMean = 0;
+        for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
+            ticketCheckMean += events[s].t;
+            if (events[s].t > ticketCheckFinalTime)
+                ticketCheckFinalTime = events[s].t;
+        }
+
+        double ticketCheckActualTime = ticketCheckFinalTime - ticketCheckFirstCompletion;
+
+        System.out.println("  avg # in node ...... =   " + f.format(areaTicketCheck / ticketCheckActualTime));
+
+        System.out.println("# abandons: " + abandonsCounterTicketCheck);
+
+        for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++)          /* adjust area to calculate */
+            areaTicketCheck -= sum[s].service;              /* averages for the queue   */
+
+        System.out.println("\nthe server statistics are:\n");
+        System.out.println("    server     utilization     avg service      share");
+        for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
+            System.out.print("       " + (s) + "          " + g.format(sum[s].service / ticketCheckActualTime) + "            ");
+            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTicketCheck));
+        }
+
+        System.out.println("");
 
     }
 
@@ -417,9 +460,14 @@ class Msq {
 
     /* this function returns the available turnstile server idle longest  */
     int findOneTurnstiles(long[] numTurnstiles, MsqEvent[] events) {
-        int s = 0;
+        int s = 12;
         for (int i = 0; i < numTurnstiles.length; i++) {
-            if ((numTurnstiles[i] <= numTurnstiles[s]) && (events[i].t < events[s].t))
+            if (numTurnstiles[i] < numTurnstiles[s - 12])
+                s = i + 12;
+        }
+
+        for (int i = 12; i < 12 +  numTurnstiles.length; i++) {
+            if ((events[i].t < events[s].t))
                 s = i;
         }
         return s;
