@@ -107,16 +107,16 @@ class Msq {
 
         /*  indexes:
          *  0: arrival at the ticket check
-         *  1, 2, 3, 4, 5: ticket check service
-         *  6: abandon after ticket check
-         *  7: arrival at the first perquisition
-         *  8, 9, 10: first perquisition service
-         *  11: abandon after first perquisition
-         *  12, 13, 14, 15, 16, 17, 18, 19: arrival at one of the turnstiles
-         *  20, 21, 22, 23, 24, 25, 26, 27: turnstiles service
-         *  28: arrival at the second perquisition
-         *  29, 30: second perquisition service
-         *  31: abandon after second perquisition
+         *  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12: ticket check service
+         *  13: abandon after ticket check
+         *  14: arrival at the first perquisition
+         *  15, 16, 17: first perquisition service
+         *  18: abandon after first perquisition
+         *  19, 20, 21, 22, 23, 24, 25, 26: arrival at one of the turnstiles
+         *  27, 28, 29, 30, 31, 32, 33, 34: turnstiles service
+         *  35: arrival at the second perquisition
+         *  36, 37: second perquisition service
+         *  38: abandon after second perquisition
          */
 
         /* sum array initialization (to keep track of services) */
@@ -146,6 +146,12 @@ class Msq {
 
         /* START ITERATION */
         while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + populationTurnstiles + numberSecondPerquisition != 0)) {
+
+            /*
+            if (indexTicketCheck > 12062) {
+                // all arrivals have been processed
+                events[0].x = 0;
+            } */
 
             /* abandons */
             if (!abandonsTicketCheck.isEmpty()) {
@@ -297,7 +303,7 @@ class Msq {
                 } else {
 
                     /* arrival at the e-th turnstile */
-                    int index = e - 12;
+                    int index = e - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION;
                     numberTurnstiles[index]++;
 
                     if (numberTurnstiles[index] == 1) {
@@ -312,8 +318,8 @@ class Msq {
 
             } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES) && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES)) {
 
-                /* service at the turnstile with index (e - 20) */
-                int index = e - 20;
+                /* service at the turnstile e */
+                int index = e - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION - ARRIVAL_EVENT_TURNSTILES;
                 indexTurnstiles[index]++;
                 numberTurnstiles[index]--;
                 populationTurnstiles--;
@@ -506,7 +512,7 @@ class Msq {
         /* the mean interarrival time is computed averaging the every server's mean interarrival time */
         double allTurnstilesInterarrivals = 0.0;
         for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
-            allTurnstilesInterarrivals += events[ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + i].t / indexTurnstiles[i];
+            allTurnstilesInterarrivals += events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + i].t / indexTurnstiles[i];
         }
         double turnstilesMeanInterarrivals = allTurnstilesInterarrivals / DEPARTURE_EVENT_TURNSTILES;
 
@@ -521,7 +527,7 @@ class Msq {
         /* the average population is computed averaging every server's average population (to do this we need all actual times) */
         double[] turnstilesFinalTimes = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         for (i = 0; i < DEPARTURE_EVENT_TURNSTILES; i++) {
-            turnstilesFinalTimes[i] = events[ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + i].t;
+            turnstilesFinalTimes[i] = events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + i].t;
         }
 
         double[] turnstilesActualTimes = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -536,16 +542,16 @@ class Msq {
         double turnstilesAveragePopulation = allTurnstilesAveragePopulations / DEPARTURE_EVENT_TURNSTILES;
 
 
-        System.out.println("\nfor " + totalIndexTurnstiles + " jobs the first perquisition statistics are:\n");
+        System.out.println("\nfor " + totalIndexTurnstiles + " jobs the turnstiles statistics are:\n");
         System.out.println("  avg interarrivals .. =   " + f.format(turnstilesMeanInterarrivals));
         System.out.println("  avg wait ........... =   " + f.format(turnstileAverageWait));
         System.out.println("  avg # in node ...... =   " + f.format(turnstilesAveragePopulation));
 
         System.out.println("\nthe server statistics are:\n");
         System.out.println("    server     utilization     avg service      share");
-        for (s = ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + ARRIVAL_EVENT_TURNSTILES ; s < ALL_EVENTS_TICKET + DEPARTURE_EVENT_TICKET + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES; s++) {
-            int index = s - ALL_EVENTS_TICKET - DEPARTURE_EVENT_TICKET - ARRIVAL_EVENT_TURNSTILES;
-            System.out.print("       " + (index) + "          " + g.format(sum[s].service / turnstilesActualTimes[index]) + "            ");
+        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES ; s < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES; s++) {
+            int index = s - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION - ARRIVAL_EVENT_TURNSTILES;
+            System.out.print("       " + (index + 1) + "          " + g.format(sum[s].service / turnstilesActualTimes[index]) + "            ");
             System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTurnstiles[index]));
         }
 
@@ -596,13 +602,13 @@ class Msq {
 
     /* this function returns the available turnstile server idle longest  */
     int findOneTurnstiles(long[] numTurnstiles, MsqEvent[] events) {
-        int s = 12;
+        int s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION;
         for (int i = 0; i < numTurnstiles.length; i++) {
-            if (numTurnstiles[i] < numTurnstiles[s - 12])
-                s = i + 12;
+            if (numTurnstiles[i] < numTurnstiles[s - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION])
+                s = i + ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION;
         }
 
-        for (int i = 12; i < 12 +  numTurnstiles.length; i++) {
+        for (int i = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION; i < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION +  numTurnstiles.length; i++) {
             if ((events[i].t < events[s].t))
                 s = i;
         }

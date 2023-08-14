@@ -16,12 +16,12 @@ public class Events {
     //---- NOT VIP EVENTS ----
     // Ticket check
     public static final int ARRIVAL_EVENT_TICKET = 1;
-    public static final int DEPARTURE_EVENT_TICKET = 5;
+    public static final int DEPARTURE_EVENT_TICKET = 37;
     public static final int ABANDON_EVENT_TICKET = 1;
 
     // First perquisition
     public static final int ARRIVAL_EVENT_FIRST_PERQUISIION = 1;
-    public static final int DEPARTURE_EVENT_FIRST_PERQUISITION = 3;
+    public static final int DEPARTURE_EVENT_FIRST_PERQUISITION = 30;
     public static final int ABANDON_EVENT_FIRST_PERQUISITION = 1;
 
     // Turnstiles
@@ -31,7 +31,7 @@ public class Events {
 
     // Second perquisition
     public static final int ARRIVAL_EVENT_SECOND_PERQUISIION = 1;
-    public static final int DEPARTURE_EVENT_SECOND_PERQUISITION = 2;
+    public static final int DEPARTURE_EVENT_SECOND_PERQUISITION = 5;
     public static final int ABANDON_EVENT_SECOND_PERQUISITION = 1;
 
     // ---- ALL EVENTS ----
