@@ -73,7 +73,7 @@ class VIPMsq {
 
 
         for (int f = 0; f < 3; f++) {
-            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 1013, 3600 * f, 3600 * (f + 1) - 1);
+            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 922, 3600 * f, 3600 * (f + 1) - 1);
             slotList.add(slot);
         }
 
@@ -100,6 +100,9 @@ class VIPMsq {
         int count = 0;
 
         while ((event[0].x != 0) || (numberTicketCheck + numberPerquisition != 0)) {
+
+            if (numberTicketCheck > DEPARTURE_EVENT_VIP_TICKET)
+                System.out.println("There's queue on the vip ticket check");
 
             if (!abandonsTicket.isEmpty()) {
                 event[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
@@ -138,7 +141,6 @@ class VIPMsq {
             }
 
             else if (e == DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET) {    // process an abandon
-                //numberTicketCheck--;
                 abandonTicketCheck++;
                 abandonsTicket.remove(0);
             }
