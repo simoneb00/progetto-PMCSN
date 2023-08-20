@@ -148,8 +148,6 @@ class Msq {
         /* START ITERATION */
         while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + populationTurnstiles + numberSecondPerquisition != 0)) {
 
-            if (indexTicketCheck > 2412)
-                break;
 
             /* abandons */
             if (!abandonsTicketCheck.isEmpty()) {

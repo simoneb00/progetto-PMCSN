@@ -41,7 +41,7 @@ class MsqEvent {                     /* the next-event list    */
 class Batch {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 1000 * 3600;        /* terminal (close the door) time  todo verification (only one hour)*/
+    static double STOP = 10000 * 3600;        /* terminal (close the door) time  todo verification (only one hour)*/
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -53,6 +53,21 @@ class Batch {
         List<Double>  responseTimesFirstPerquisition = new ArrayList<>();
         List<Double>  responseTimesTurnstiles = new ArrayList<>();
         List<Double>  responseTimesSecondPerquisition = new ArrayList<>();
+
+        List<Double> avgPopulationsTicketCheck = new ArrayList<>();
+        List<Double> avgPopulationsFirstPerquisition = new ArrayList<>();
+        List<Double> avgPopulationsTurnstiles = new ArrayList<>();
+        List<Double> avgPopulationsSecondPerquisition = new ArrayList<>();
+
+        List<Double> delaysTicketCheck = new ArrayList<>();
+        List<Double> delaysFirstPerquisition = new ArrayList<>();
+        List<Double> delaysTurnstiles = new ArrayList<>();
+        List<Double> delaysSecondPerquisition = new ArrayList<>();
+
+        List<Double> avgQueuePopTicketCheck = new ArrayList<>();
+        List<Double> avgQueuePopFirstPerquisition = new ArrayList<>();
+        List<Double> avgQueuePopTurnstiles = new ArrayList<>();
+        List<Double> avgQueuePopSecondPerquisition = new ArrayList<>();
 
         /* stream index for the rng */
         int streamIndex = 1;
@@ -161,8 +176,33 @@ class Batch {
                 /* if true, k * 1024 job have arrived -> new batch */
 
                 responseTimesTicketCheck.add(areaTicketCheck / indexTicketCheck);
+
+                double ticketCheckFinalTime = 0;
+                double ticketCheckMean = 0;
+                for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
+                    ticketCheckMean += events[s].t;
+                    if (events[s].t > ticketCheckFinalTime)
+                        ticketCheckFinalTime = events[s].t;
+                }
+
+                double ticketCheckActualTime = ticketCheckFinalTime - ticketCheckFirstCompletion;
+
+                avgPopulationsTicketCheck.add(areaTicketCheck / ticketCheckActualTime);
+
+                for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++)          /* adjust area to calculate */
+                    areaTicketCheck -= sum[s].service;                 /* averages for the queue   */
+
+                delaysTicketCheck.add(areaTicketCheck / indexTicketCheck);
+                avgQueuePopTicketCheck.add(areaTicketCheck / indexTicketCheck);
+
                 areaTicketCheck = 0;
                 indexTicketCheck = 0;
+
+                for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
+                    sum[s].served = 0;
+                    sum[s].service = 0;
+                }
+
 
                 responseTimesFirstPerquisition.add(areaFirstPerquisition / indexFirstPerquisition);
                 areaFirstPerquisition = 0;
@@ -451,6 +491,12 @@ class Batch {
             allRTsTC += rt;
         }
         System.out.println("Mean response time for ticket check: " + allRTsTC / responseTimesTicketCheck.size());
+
+        double allDelays = 0;
+        for (double delay : delaysTicketCheck) {
+            allDelays += delay;
+        }
+        System.out.println("Average queueing time for ticket check: " + allDelays / delaysTicketCheck.size());
 
         // todo others
 
