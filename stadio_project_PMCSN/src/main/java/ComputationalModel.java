@@ -142,11 +142,10 @@ class Msq {
             sum[s].served = 0;
         }
 
-        int populationTurnstiles = 0;
 
 
         /* START ITERATION */
-        while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + populationTurnstiles + numberSecondPerquisition != 0)) {
+        while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + numberTurnstiles + numberSecondPerquisition != 0)) {
 
 
             /* abandons */
@@ -675,7 +674,7 @@ class Msq {
         while (events[i].x == 1)       /* find the index of the first available */
             i++;                      /* (idle) server                         */
         s = i;
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION + 1) {         /* now, check the others to find which   */
+        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION) {         /* now, check the others to find which   */
             i++;                                             /* has been idle longest                 */
             if ((events[i].x == 0) && (events[i].t < events[s].t))
                 s = i;

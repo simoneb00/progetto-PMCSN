@@ -331,9 +331,42 @@ class Batch {
                 /* SECOND PERQUISITION */
 
                 responseTimesSecondPerquisition.add(areaSecondPerquisition / indexSecondPerquisition);
+                interarrivalsSecondPerquisition.add((events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t - currentFirstArrivalTimeSP) / indexSecondPerquisition);
+                allAbandonsSecondPerquisition.add(abandonsCounterSecondPerquisition);
+
+
+                double secondPerquisitionActualTime = t.current - currentBatchStartingTime;
+
+                avgPopulationsSecondPerquisition.add(areaSecondPerquisition / secondPerquisitionActualTime);
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION; s++)          /* adjust area to calculate */
+                    areaSecondPerquisition -= sum[s].service;                                                                /* averages for the queue   */
+
+                delaysSecondPerquisition.add(areaSecondPerquisition / indexSecondPerquisition);
+
+                sumUtilizations = 0.0;
+                sumServices = 0.0;
+                sumServed = 0.0;
+
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION; s++) {
+                    sumUtilizations += sum[s].service / secondPerquisitionActualTime;
+                    sumServices += sum[s].service;
+                    sumServed += sum[s].served;
+                }
+
+                utilizationsSecondPerquisition.add(sumUtilizations / DEPARTURE_EVENT_SECOND_PERQUISITION);
+                serviceTimesSecondPerquisition.add(sumServices / sumServed);
+
+
                 areaSecondPerquisition = 0;
                 indexSecondPerquisition = 0;
+                abandonsCounterSecondPerquisition = 0;
 
+                for (s = ALL_EVENTS_TICKET +ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + DEPARTURE_EVENT_SECOND_PERQUISITION; s++) {
+                    sum[s].served = 0;
+                    sum[s].service = 0;
+                }
 
 
                 /* final updates */
@@ -341,6 +374,7 @@ class Batch {
                 currentFirstArrivalTimeTC = events[0].t;
                 currentFirstArrivalTimeFP = events[ALL_EVENTS_TICKET].t;
                 currentFirstArrivalTimeT = events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t;
+                currentFirstArrivalTimeSP = events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t;
             }
 
             if (batchCounter == k)
@@ -757,8 +791,51 @@ class Batch {
         System.out.println("Avg population for turnstiles: " + allPopulations / avgPopulationsTurnstiles.size());
 
 
+        System.out.println("");
+
         /* SECOND PERQUISITION */
 
+        allRTs = 0;
+        for (double rt : responseTimesSecondPerquisition) {
+            allRTs += rt;
+        }
+        System.out.println("Mean response time for second perquisition: " + allRTs / responseTimesSecondPerquisition.size());
+
+        allDelays = 0;
+        for (double delay : delaysSecondPerquisition) {
+            allDelays += delay;
+        }
+        System.out.println("Average queueing time for second perquisition: " + allDelays / delaysSecondPerquisition.size());
+
+        allUtilizations = 0;
+        for (double u : utilizationsSecondPerquisition) {
+            allUtilizations += u;
+        }
+        System.out.println("Avg utilization for second perquisition: " + allUtilizations / utilizationsSecondPerquisition.size());
+
+        allInterarrivals = 0;
+        for (double i : interarrivalsSecondPerquisition) {
+            allInterarrivals += i;
+        }
+        System.out.println("Avg interarrivals for second perquisition: " + allInterarrivals / interarrivalsSecondPerquisition.size());
+
+        allAbandons = 0;
+        for (double a : allAbandonsSecondPerquisition) {
+            allAbandons += a;
+        }
+        System.out.println("Avg abandons for second perquisition: " + allAbandons / allAbandonsSecondPerquisition.size());
+
+        allServiceTimes = 0;
+        for (double st : serviceTimesSecondPerquisition) {
+            allServiceTimes += st;
+        }
+        System.out.println("Avg service time for second perquisition: " + allServiceTimes / serviceTimesSecondPerquisition.size());
+
+        allPopulations = 0;
+        for (double pop : avgPopulationsSecondPerquisition) {
+            allPopulations += pop;
+        }
+        System.out.println("Avg population for second perquisition: " + allPopulations / avgPopulationsSecondPerquisition.size());
 
 
         File directory = new File("batch_reports");
