@@ -3,6 +3,10 @@ package batch;
 import libraries.Rngs;
 import model.TimeSlot;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +20,22 @@ import static model.Constants.*;
 
 /*
  *  Network:
- *  ----> ticket check (M|M|5) -----------> first perquisition (M|M|3) ----------> turnstiles (8 M|M|1) ----> second perquisition (M|M|2) -------------->
+ *  ----> ticket check ----------------------> first perquisition ------------> turnstiles ---------------------> second perquisition ------------------>
  *                               |      |                               ^    |                            |                                  ^   |
  *                               | P1   |              P4               |    | P2                         |                P5                |   | P3
  *                               V      |_______________________________|    V                            |__________________________________|   V
  */
 
+
+/*  Statistiche:
+    * tempo di attesa
+    * tempo di risposta
+    * utilizzazione
+    * numero di job nel sistema
+    * tempo di interarrivo
+    * numero di abbandoni
+    * tempi di servizio
+ */
 
 class MsqT {
     double current;                   /* current time                       */
@@ -41,33 +55,61 @@ class MsqEvent {                     /* the next-event list    */
 class Batch {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 10000 * 3600;        /* terminal (close the door) time  todo verification (only one hour)*/
+    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
 
     public static void main(String[] args) {
 
+        long batchCounter = 0;
+        int k = 128;
+        int b = 1024;
+
         /* lists for batch simulation */
-        List<Double>  responseTimesTicketCheck = new ArrayList<>();
-        List<Double>  responseTimesFirstPerquisition = new ArrayList<>();
-        List<Double>  responseTimesTurnstiles = new ArrayList<>();
-        List<Double>  responseTimesSecondPerquisition = new ArrayList<>();
 
-        List<Double> avgPopulationsTicketCheck = new ArrayList<>();
-        List<Double> avgPopulationsFirstPerquisition = new ArrayList<>();
-        List<Double> avgPopulationsTurnstiles = new ArrayList<>();
-        List<Double> avgPopulationsSecondPerquisition = new ArrayList<>();
-
+        /* waiting times */
         List<Double> delaysTicketCheck = new ArrayList<>();
         List<Double> delaysFirstPerquisition = new ArrayList<>();
         List<Double> delaysTurnstiles = new ArrayList<>();
         List<Double> delaysSecondPerquisition = new ArrayList<>();
 
-        List<Double> avgQueuePopTicketCheck = new ArrayList<>();
-        List<Double> avgQueuePopFirstPerquisition = new ArrayList<>();
-        List<Double> avgQueuePopTurnstiles = new ArrayList<>();
-        List<Double> avgQueuePopSecondPerquisition = new ArrayList<>();
+        /* response times */
+        List<Double>  responseTimesTicketCheck = new ArrayList<>();
+        List<Double>  responseTimesFirstPerquisition = new ArrayList<>();
+        List<Double>  responseTimesTurnstiles = new ArrayList<>();
+        List<Double>  responseTimesSecondPerquisition = new ArrayList<>();
+
+        /* utilizations */
+        List<Double> utilizationsTicketCheck = new ArrayList<>();
+        List<Double> utilizationsFirstPerquisition = new ArrayList<>();
+        List<Double> utilizationsTurnstiles = new ArrayList<>();
+        List<Double> utilizationsSecondPerquisition = new ArrayList<>();
+
+        /* system populations */
+        List<Double> avgPopulationsTicketCheck = new ArrayList<>();
+        List<Double> avgPopulationsFirstPerquisition = new ArrayList<>();
+        List<Double> avgPopulationsTurnstiles = new ArrayList<>();
+        List<Double> avgPopulationsSecondPerquisition = new ArrayList<>();
+
+        /* interarrivals */
+        List<Double> interarrivalsTicketCheck = new ArrayList<>();
+        List<Double> interarrivalsFirstPerquisition = new ArrayList<>();
+        List<Double> interarrivalsTurnstiles = new ArrayList<>();
+        List<Double> interarrivalsSecondPerquisition = new ArrayList<>();
+
+        /* abandons */
+        List<Long> allAbandonsTicketCheck = new ArrayList<>();
+        List<Long> allAbandonsFirstPerquisition = new ArrayList<>();
+        List<Long> allAbandonsTurnstiles = new ArrayList<>();
+        List<Long> allAbandonsSecondPerquisition = new ArrayList<>();
+
+        /* service times */
+        List<Double> serviceTimesTicketCheck = new ArrayList<>();
+        List<Double> serviceTimesFirstPerquisition = new ArrayList<>();
+        List<Double> serviceTimesTurnstiles = new ArrayList<>();
+        List<Double> serviceTimesSecondPerquisition = new ArrayList<>();
+
 
         /* stream index for the rng */
         int streamIndex = 1;
@@ -129,19 +171,6 @@ class Batch {
         /* events array initialization */
         MsqEvent[] events = new MsqEvent[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION];
 
-        /*  indexes:
-         *  0: arrival at the ticket check
-         *  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12: ticket check service
-         *  13: abandon after ticket check
-         *  14: arrival at the first perquisition
-         *  15, 16, 17: first perquisition service
-         *  18: abandon after first perquisition
-         *  19, 20, 21, 22, 23, 24, 25, 26: arrival at one of the turnstiles
-         *  27, 28, 29, 30, 31, 32, 33, 34: turnstiles service
-         *  35: arrival at the second perquisition
-         *  36, 37: second perquisition service
-         *  38: abandon after second perquisition
-         */
 
         /* sum array initialization (to keep track of services) */
         MsqSum[] sum = new MsqSum[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION];
@@ -166,26 +195,28 @@ class Batch {
             sum[s].served = 0;
         }
 
-        int populationTurnstiles = 0;
-
+        double currentBatchStartingTime = 0;
+        double currentFirstArrivalTimeTC = 0;
+        double currentFirstArrivalTimeFP = 0;
+        double currentFirstArrivalTimeT = 0;
+        double currentFirstArrivalTimeSP = 0;
 
         /* START ITERATION */
-        while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + populationTurnstiles + numberSecondPerquisition != 0)) {
+        while ((events[0].x != 0)) {
 
-            if (indexTicketCheck != 0 && indexTicketCheck % 1024 == 0) {
-                /* if true, k * 1024 job have arrived -> new batch */
+            if (indexTicketCheck != 0 && indexTicketCheck % b == 0) {
+                /* new batch */
 
+                batchCounter++;
+
+
+                /* TICKET CHECK */
                 responseTimesTicketCheck.add(areaTicketCheck / indexTicketCheck);
+                interarrivalsTicketCheck.add((events[ARRIVAL_EVENT_TICKET -1].t - currentFirstArrivalTimeTC) / indexTicketCheck);
+                allAbandonsTicketCheck.add(abandonsCounterTicketCheck);
 
-                double ticketCheckFinalTime = 0;
-                double ticketCheckMean = 0;
-                for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
-                    ticketCheckMean += events[s].t;
-                    if (events[s].t > ticketCheckFinalTime)
-                        ticketCheckFinalTime = events[s].t;
-                }
 
-                double ticketCheckActualTime = ticketCheckFinalTime - ticketCheckFirstCompletion;
+                double ticketCheckActualTime = t.current - currentBatchStartingTime;
 
                 avgPopulationsTicketCheck.add(areaTicketCheck / ticketCheckActualTime);
 
@@ -193,10 +224,25 @@ class Batch {
                     areaTicketCheck -= sum[s].service;                 /* averages for the queue   */
 
                 delaysTicketCheck.add(areaTicketCheck / indexTicketCheck);
-                avgQueuePopTicketCheck.add(areaTicketCheck / indexTicketCheck);
+
+                double sumUtilizations = 0.0;
+                double sumServices = 0.0;
+                double sumServed = 0.0;
+
+
+                for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
+                    sumUtilizations += sum[s].service / ticketCheckActualTime;
+                    sumServices += sum[s].service;
+                    sumServed += sum[s].served;
+                }
+
+                utilizationsTicketCheck.add(sumUtilizations / DEPARTURE_EVENT_TICKET);
+                serviceTimesTicketCheck.add(sumServices / sumServed);
+
 
                 areaTicketCheck = 0;
                 indexTicketCheck = 0;
+                abandonsCounterTicketCheck = 0;
 
                 for (s = 1; s <= DEPARTURE_EVENT_TICKET; s++) {
                     sum[s].served = 0;
@@ -204,20 +250,101 @@ class Batch {
                 }
 
 
+
+                /* FIRST PERQUISITION */
+
                 responseTimesFirstPerquisition.add(areaFirstPerquisition / indexFirstPerquisition);
+                interarrivalsFirstPerquisition.add((events[ALL_EVENTS_TICKET].t - currentFirstArrivalTimeFP) / indexFirstPerquisition);
+                allAbandonsFirstPerquisition.add(abandonsCounterFirstPerquisition);
+
+
+                double firstPerquisitionActualTime = t.current - currentBatchStartingTime;
+
+                avgPopulationsFirstPerquisition.add(areaFirstPerquisition / firstPerquisitionActualTime);
+
+                for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET  + DEPARTURE_EVENT_FIRST_PERQUISITION; s++)          /* adjust area to calculate */
+                    areaFirstPerquisition -= sum[s].service;                                                                /* averages for the queue   */
+
+                delaysFirstPerquisition.add(areaFirstPerquisition / indexFirstPerquisition);
+
+                sumUtilizations = 0.0;
+                sumServices = 0.0;
+                sumServed = 0.0;
+
+
+                for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION; s++) {
+                    sumUtilizations += sum[s].service / firstPerquisitionActualTime;
+                    sumServices += sum[s].service;
+                    sumServed += sum[s].served;
+                }
+
+                utilizationsFirstPerquisition.add(sumUtilizations / DEPARTURE_EVENT_FIRST_PERQUISITION);
+                serviceTimesFirstPerquisition.add(sumServices / sumServed);
+
+
                 areaFirstPerquisition = 0;
                 indexFirstPerquisition = 0;
+                abandonsCounterFirstPerquisition = 0;
+
+                for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION; s++) {
+                    sum[s].served = 0;
+                    sum[s].service = 0;
+                }
+
+
+                /* TURNSTILES */
 
                 responseTimesTurnstiles.add(areaTurnstiles / indexTurnstiles);
+                interarrivalsTurnstiles.add((events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t - currentFirstArrivalTimeT) / indexTurnstiles);
+
+                double turnstilesActualTime = t.current - currentBatchStartingTime;
+
+                avgPopulationsTurnstiles.add(areaTurnstiles / turnstilesActualTime);
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1; s <= ALL_EVENTS_TICKET  + ALL_EVENTS_FIRST_PERQUISITION + DEPARTURE_EVENT_TURNSTILES; s++)          /* adjust area to calculate */
+                    areaTurnstiles -= sum[s].service;                                                                /* averages for the queue   */
+
+                delaysTurnstiles.add(Math.max(0, areaTurnstiles / indexTurnstiles));
+
+                sumUtilizations = 0.0;
+                sumServices = 0.0;
+                sumServed = 0.0;
+
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1; s <= ALL_EVENTS_TICKET  + ALL_EVENTS_FIRST_PERQUISITION + DEPARTURE_EVENT_TURNSTILES; s++) {
+                    sumUtilizations += sum[s].service / turnstilesActualTime;
+                    sumServices += sum[s].service;
+                    sumServed += sum[s].served;
+                }
+
+                utilizationsTurnstiles.add(sumUtilizations / DEPARTURE_EVENT_TURNSTILES);
+                serviceTimesTurnstiles.add(sumServices / sumServed);
+
                 areaTurnstiles = 0;
                 indexTurnstiles = 0;
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1; s <= ALL_EVENTS_TICKET  + ALL_EVENTS_FIRST_PERQUISITION + DEPARTURE_EVENT_TURNSTILES; s++) {
+                    sum[s].served = 0;
+                    sum[s].service = 0;
+                }
+
+                /* SECOND PERQUISITION */
 
                 responseTimesSecondPerquisition.add(areaSecondPerquisition / indexSecondPerquisition);
                 areaSecondPerquisition = 0;
                 indexSecondPerquisition = 0;
 
+
+
+                /* final updates */
+                currentBatchStartingTime = t.current;
+                currentFirstArrivalTimeTC = events[0].t;
+                currentFirstArrivalTimeFP = events[ALL_EVENTS_TICKET].t;
+                currentFirstArrivalTimeT = events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t;
             }
 
+            if (batchCounter == k)
+                break;
 
 
             /* abandons */
@@ -316,7 +443,8 @@ class Batch {
                         events[s].x = 1;
                     }
                 }
-            } else if ((e > ALL_EVENTS_TICKET) && (e <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION)) {  /* service on one of the first perquisition servers (e = 8, 9, 10) */
+            }
+            else if ((e > ALL_EVENTS_TICKET) && (e <= ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION)) {  /* service on one of the first perquisition servers (e = 8, 9, 10) */
 
                 if (firstPerquisitionFirstCompletion == 0)
                     firstPerquisitionFirstCompletion = t.current;
@@ -340,12 +468,14 @@ class Batch {
                     events[s].x = 0;
                 }
 
-            } else if (e == ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION + ABANDON_EVENT_FIRST_PERQUISITION) {    /* abandon after first perquisition */
+            }
+            else if (e == ALL_EVENTS_TICKET + DEPARTURE_EVENT_FIRST_PERQUISITION + ABANDON_EVENT_FIRST_PERQUISITION) {    /* abandon after first perquisition */
 
                 abandonsCounterFirstPerquisition++;
                 abandonsFirstPerquisition.remove(0);
 
-            } else if ((e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION)) {  /* departure from first perquisition (i.e. arrival at turnstiles) */
+            }
+            else if ((e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION)) {  /* departure from first perquisition (i.e. arrival at turnstiles) */
 
                 events[e].x = 0;
 
@@ -372,7 +502,8 @@ class Batch {
                     }
                 }
 
-            } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES) && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES)) {
+            }
+            else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES) && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + DEPARTURE_EVENT_TURNSTILES)) {
 
                 /* service at the turnstile e */
 
@@ -398,7 +529,8 @@ class Batch {
                     events[s].x = 0;
                 }
 
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES) {
+            }
+            else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES) {
 
                 events[e].x = 0;
 
@@ -423,7 +555,8 @@ class Batch {
                     }
                 }
 
-            } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION)
+            }
+            else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION)
                     && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION + DEPARTURE_EVENT_SECOND_PERQUISITION)
             ) {
                 /* second perquisition service */
@@ -445,12 +578,14 @@ class Batch {
                         events[s].x = 0;
                     }
                 }
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1) {
+            }
+            else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1) {
                 /* abandon after second perquisition */
                 abandonsCounterSecondPerquisition++;
                 abandonsSecondPerquisition.remove(0);
 
-            } else {    /* ticket check service */
+            }
+            else {    /* ticket check service */
                 if (ticketCheckFirstCompletion == 0)
                     ticketCheckFirstCompletion = t.current;
 
@@ -484,19 +619,180 @@ class Batch {
         DecimalFormat g = new DecimalFormat("###0.000000");
 
 
-        /* batch simulation results */
+        /* BATCH SIMULATION RESULTS */
 
-        double allRTsTC = 0;
+        System.out.println("Completed " + batchCounter + " batches");
+
+        /* TICKET CHECK */
+
+        double allRTs = 0;
         for (double rt : responseTimesTicketCheck) {
-            allRTsTC += rt;
+            allRTs += rt;
         }
-        System.out.println("Mean response time for ticket check: " + allRTsTC / responseTimesTicketCheck.size());
+        System.out.println("Mean response time for ticket check: " + allRTs / responseTimesTicketCheck.size());
 
         double allDelays = 0;
         for (double delay : delaysTicketCheck) {
             allDelays += delay;
         }
         System.out.println("Average queueing time for ticket check: " + allDelays / delaysTicketCheck.size());
+
+        double allUtilizations = 0;
+        for (double u : utilizationsTicketCheck) {
+            allUtilizations += u;
+        }
+        System.out.println("Avg utilization for ticket check: " + allUtilizations / utilizationsTicketCheck.size());
+
+        double allInterarrivals = 0;
+        for (double i : interarrivalsTicketCheck) {
+            allInterarrivals += i;
+        }
+        System.out.println("Avg interarrivals for ticket check: " + allInterarrivals / interarrivalsTicketCheck.size());
+
+        double allAbandons = 0;
+        for (double a : allAbandonsTicketCheck) {
+            allAbandons += a;
+        }
+        System.out.println("Avg abandons for ticket check: " + allAbandons / allAbandonsTicketCheck.size());
+
+        double allServiceTimes = 0;
+        for (double st : serviceTimesTicketCheck) {
+            allServiceTimes += st;
+        }
+        System.out.println("Avg service time for ticket check: " + allServiceTimes / serviceTimesTicketCheck.size());
+
+        double allPopulations = 0;
+        for (double pop : avgPopulationsTicketCheck) {
+            allPopulations += pop;
+        }
+        System.out.println("Avg population for ticket check: " + allPopulations / avgPopulationsTicketCheck.size());
+
+
+        System.out.println("");
+
+
+        /* FIRST PERQUISITION */
+
+        allRTs = 0;
+        for (double rt : responseTimesFirstPerquisition) {
+            allRTs += rt;
+        }
+        System.out.println("Mean response time for first perquisition: " + allRTs / responseTimesFirstPerquisition.size());
+
+        allDelays = 0;
+        for (double delay : delaysFirstPerquisition) {
+            allDelays += delay;
+        }
+        System.out.println("Average queueing time for first perquisition: " + allDelays / delaysFirstPerquisition.size());
+
+        allUtilizations = 0;
+        for (double u : utilizationsFirstPerquisition) {
+            allUtilizations += u;
+        }
+        System.out.println("Avg utilization for first perquisition: " + allUtilizations / utilizationsFirstPerquisition.size());
+
+        allInterarrivals = 0;
+        for (double i : interarrivalsFirstPerquisition) {
+            allInterarrivals += i;
+        }
+        System.out.println("Avg interarrivals for first perquisition: " + allInterarrivals / interarrivalsFirstPerquisition.size());
+
+        allAbandons = 0;
+        for (double a : allAbandonsFirstPerquisition) {
+            allAbandons += a;
+        }
+        System.out.println("Avg abandons for first perquisition: " + allAbandons / allAbandonsFirstPerquisition.size());
+
+        allServiceTimes = 0;
+        for (double st : serviceTimesFirstPerquisition) {
+            allServiceTimes += st;
+        }
+        System.out.println("Avg service time for first perquisition: " + allServiceTimes / serviceTimesFirstPerquisition.size());
+
+        allPopulations = 0;
+        for (double pop : avgPopulationsFirstPerquisition) {
+            allPopulations += pop;
+        }
+        System.out.println("Avg population for first perquisition: " + allPopulations / avgPopulationsFirstPerquisition.size());
+
+
+        System.out.println("");
+
+        /* TURNSTILES */
+
+        allRTs = 0;
+        for (double rt : responseTimesTurnstiles) {
+            allRTs += rt;
+        }
+        System.out.println("Mean response time for turnstiles: " + allRTs / responseTimesTurnstiles.size());
+
+        allDelays = 0;
+        for (double delay : delaysTurnstiles) {
+            allDelays += delay;
+        }
+        System.out.println("Average queueing time for turnstiles: " + allDelays / delaysTurnstiles.size());
+
+        allUtilizations = 0;
+        for (double u : utilizationsTurnstiles) {
+            allUtilizations += u;
+        }
+        System.out.println("Avg utilization for turnstiles: " + allUtilizations / utilizationsTurnstiles.size());
+
+        allInterarrivals = 0;
+        for (double i : interarrivalsTurnstiles) {
+            allInterarrivals += i;
+        }
+        System.out.println("Avg interarrivals for turnstiles: " + allInterarrivals / interarrivalsTurnstiles.size());
+
+        allServiceTimes = 0;
+        for (double st : serviceTimesTurnstiles) {
+            allServiceTimes += st;
+        }
+        System.out.println("Avg service time for turnstiles: " + allServiceTimes / serviceTimesTurnstiles.size());
+
+        allPopulations = 0;
+        for (double pop : avgPopulationsTurnstiles) {
+            allPopulations += pop;
+        }
+        System.out.println("Avg population for turnstiles: " + allPopulations / avgPopulationsTurnstiles.size());
+
+
+        /* SECOND PERQUISITION */
+
+
+
+        File directory = new File("batch_reports");
+        BufferedWriter bw = null;
+
+        try {
+            if (!directory.exists())
+                directory.mkdirs();
+
+            File file = new File(directory, "delay_ticket_check.csv");
+
+            if (!file.exists())
+                file.createNewFile();
+
+            FileWriter writer = new FileWriter(file);
+            bw = new BufferedWriter(writer);
+
+
+            for (int i = 0; i < delaysTicketCheck.size(); i++) {
+                bw.append(String.valueOf(delaysTicketCheck.get(i)));
+                bw.append("\n");
+                bw.flush();
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } finally {
+            try {
+                bw.flush();
+                bw.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
 
         // todo others
 
