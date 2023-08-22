@@ -47,7 +47,7 @@ class Acs {
       cosum[j] = 0.0;
 
     String line;
-    InputStreamReader r = new InputStreamReader(new FileInputStream(new File("batch_reports/delay_ticket_check.csv")));
+    InputStreamReader r = new InputStreamReader(new FileInputStream(new File("batch_reports/delays_ticket_check.dat")));
     BufferedReader ReadThis = new BufferedReader(r);
     try {                         /* the first K + 1 data values    */
       while (i < SIZE) {              /* initialize the hold array with */

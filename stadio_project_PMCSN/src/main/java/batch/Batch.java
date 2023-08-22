@@ -64,7 +64,7 @@ class Batch {
 
         long batchCounter = 0;
         int k = 128;
-        int b = 1024;
+        int b = 1024*7;
 
         /* lists for batch simulation */
 

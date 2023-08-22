@@ -258,7 +258,7 @@ class BatchVIP {
                 events[ALL_EVENTS_VIP_TICKET].x = 0;
 
                 // generate, with probability P6, an abandon
-                boolean abandon = generateAbandon(r, streamIndex, P6);
+                boolean abandon = generateAbandon(r, streamIndex, P4);
                 if (abandon) {  // add an abandon
                     double abandonTime = t.current + 0.01;  // this will be the next abandon time (it must be small in order to execute the abandon as next event)
                     abandonsTicket.add(abandonTime);
@@ -284,7 +284,7 @@ class BatchVIP {
                 if (firstCompletionPerquisition == 0)
                     firstCompletionPerquisition = t.current;
 
-                boolean abandon = generateAbandon(r, streamIndex, P7);
+                boolean abandon = generateAbandon(r, streamIndex, P5);
                 if (abandon) {
                     double abandonTime = t.current + 0.01;
                     abandonsPerquisition.add(abandonTime);

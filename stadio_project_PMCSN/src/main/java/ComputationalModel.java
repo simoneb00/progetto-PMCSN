@@ -14,7 +14,7 @@ import static model.Constants.*;
 
 /*
  *  Network:
- *  ----> ticket check (M|M|5) -----------> first perquisition (M|M|3) ----------> turnstiles (8 M|M|1) ----> second perquisition (M|M|2) -------------->
+ *  ----> ticket check ----------------------> first perquisition ------------> turnstiles ---------------------> second perquisition ------------------>
  *                               |      |                               ^    |                            |                                  ^   |
  *                               | P1   |              P4               |    | P2                         |                P5                |   | P3
  *                               V      |_______________________________|    V                            |__________________________________|   V

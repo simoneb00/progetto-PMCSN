@@ -16,17 +16,12 @@ public class Constants {
     public static final double P3 = 0.02;
 
     // probability of abandon after vip ticket check
-    public static final double P6 = 0.1;
+    public static final double P4 = 0.1;
 
     // probability of abandon after vip perquisition
-    public static final double P7 = 0.02;
+    public static final double P5 = 0.02;
 
-    // ---- SKIPP PROB ----
-    // probability of skipping first perquisition
-    public static final double P4 = 0.3;
 
-    // probability of skipping second perquisition
-    public static final double P5 = 0.5;
 
     // ---- TIME SLOT PERCENTAGE ----
     public static final double [] PERCENTAGE = { 0.20, 0.70, 0.10};
