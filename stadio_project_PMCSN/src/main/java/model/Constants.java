@@ -49,7 +49,7 @@ public class Constants {
     public static final double P_SR = 30;
 
     // turnstiles
-    public static final double T_SR = 2;
+    public static final double T_SR = 5;
 
     // VIP ticket check
     public static final double V_TC_SR = 20;

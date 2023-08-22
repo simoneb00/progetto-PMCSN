@@ -99,10 +99,10 @@ class Batch {
         List<Double> interarrivalsSecondPerquisition = new ArrayList<>();
 
         /* abandons */
-        List<Long> allAbandonsTicketCheck = new ArrayList<>();
-        List<Long> allAbandonsFirstPerquisition = new ArrayList<>();
-        List<Long> allAbandonsTurnstiles = new ArrayList<>();
-        List<Long> allAbandonsSecondPerquisition = new ArrayList<>();
+        List<Double> allAbandonsTicketCheck = new ArrayList<>();
+        List<Double> allAbandonsFirstPerquisition = new ArrayList<>();
+        List<Double> allAbandonsTurnstiles = new ArrayList<>();
+        List<Double> allAbandonsSecondPerquisition = new ArrayList<>();
 
         /* service times */
         List<Double> serviceTimesTicketCheck = new ArrayList<>();
@@ -213,7 +213,7 @@ class Batch {
                 /* TICKET CHECK */
                 responseTimesTicketCheck.add(areaTicketCheck / indexTicketCheck);
                 interarrivalsTicketCheck.add((events[ARRIVAL_EVENT_TICKET -1].t - currentFirstArrivalTimeTC) / indexTicketCheck);
-                allAbandonsTicketCheck.add(abandonsCounterTicketCheck);
+                allAbandonsTicketCheck.add((double) abandonsCounterTicketCheck / b);
 
 
                 double ticketCheckActualTime = t.current - currentBatchStartingTime;
@@ -255,7 +255,7 @@ class Batch {
 
                 responseTimesFirstPerquisition.add(areaFirstPerquisition / indexFirstPerquisition);
                 interarrivalsFirstPerquisition.add((events[ALL_EVENTS_TICKET].t - currentFirstArrivalTimeFP) / indexFirstPerquisition);
-                allAbandonsFirstPerquisition.add(abandonsCounterFirstPerquisition);
+                allAbandonsFirstPerquisition.add((double) abandonsCounterFirstPerquisition / b);
 
 
                 double firstPerquisitionActualTime = t.current - currentBatchStartingTime;
@@ -332,7 +332,7 @@ class Batch {
 
                 responseTimesSecondPerquisition.add(areaSecondPerquisition / indexSecondPerquisition);
                 interarrivalsSecondPerquisition.add((events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t - currentFirstArrivalTimeSP) / indexSecondPerquisition);
-                allAbandonsSecondPerquisition.add(abandonsCounterSecondPerquisition);
+                allAbandonsSecondPerquisition.add((double) abandonsCounterSecondPerquisition / b);
 
 
                 double secondPerquisitionActualTime = t.current - currentBatchStartingTime;
@@ -837,7 +837,63 @@ class Batch {
         }
         System.out.println("Avg population for second perquisition: " + allPopulations / avgPopulationsSecondPerquisition.size());
 
+        System.out.println("");
 
+        /* files creation for interval estimation */
+
+        /* TICKET CHECK */
+        writeFile(delaysTicketCheck, "delays_ticket_check");
+        writeFile(responseTimesTicketCheck, "response_times_ticket_check");
+        writeFile(utilizationsTicketCheck, "utilizations_ticket_check");
+        writeFile(avgPopulationsTicketCheck, "populations_ticket_check");
+        writeFile(interarrivalsTicketCheck, "interarrivals_ticket_check");
+        writeFile(allAbandonsTicketCheck, "abandons_ticket_check");
+        writeFile(serviceTimesTicketCheck, "service_times_ticket_check");
+
+        /* FIRST PERQUISITION */
+        writeFile(delaysFirstPerquisition, "delays_first_perquisition");
+        writeFile(responseTimesFirstPerquisition, "response_times_first_perquisition");
+        writeFile(utilizationsFirstPerquisition, "utilizations_first_perquisition");
+        writeFile(avgPopulationsFirstPerquisition, "populations_first_perquisition");
+        writeFile(interarrivalsFirstPerquisition, "interarrivals_first_perquisition");
+        writeFile(allAbandonsFirstPerquisition, "abandons_first_perquisition");
+        writeFile(serviceTimesFirstPerquisition, "service_times_first_perquisition");
+
+        /* TURNSTILES */
+        writeFile(delaysTurnstiles, "delays_turnstiles");
+        writeFile(responseTimesTurnstiles, "response_times_turnstiles");
+        writeFile(utilizationsTurnstiles, "utilizations_turnstiles");
+        writeFile(avgPopulationsTurnstiles, "populations_turnstiles");
+        writeFile(interarrivalsTurnstiles, "interarrivals_turnstiles");
+        writeFile(serviceTimesTurnstiles, "service_times_turnstiles");
+
+        /* SECOND PERQUISITION */
+        writeFile(delaysSecondPerquisition, "delays_second_perquisition");
+        writeFile(responseTimesSecondPerquisition, "response_times_second_perquisition");
+        writeFile(utilizationsSecondPerquisition, "utilizations_second_perquisition");
+        writeFile(avgPopulationsSecondPerquisition, "populations_second_perquisition");
+        writeFile(interarrivalsSecondPerquisition, "interarrivals_second_perquisition");
+        writeFile(allAbandonsSecondPerquisition, "abandons_second_perquisition");
+        writeFile(serviceTimesSecondPerquisition, "service_times_second_perquisition");
+
+
+        /* INTERVAL ESTIMATION */
+
+        Estimate estimate = new Estimate();
+
+        List<String> filenames = List.of("delays_ticket_check", "response_times_ticket_check", "utilizations_ticket_check", "populations_ticket_check", "interarrivals_ticket_check", "abandons_ticket_check", "service_times_ticket_check",
+                "delays_first_perquisition", "response_times_first_perquisition", "utilizations_first_perquisition", "populations_first_perquisition", "interarrivals_first_perquisition", "abandons_first_perquisition", "service_times_first_perquisition",
+                "delays_turnstiles", "response_times_turnstiles", "utilizations_turnstiles", "populations_turnstiles", "interarrivals_turnstiles", "service_times_turnstiles",
+                "delays_second_perquisition", "response_times_second_perquisition", "utilizations_second_perquisition", "populations_second_perquisition","interarrivals_second_perquisition", "abandons_second_perquisition", "service_times_second_perquisition"
+                );
+
+        for (String filename : filenames) {
+            estimate.createInterval(filename);
+        }
+
+    }
+
+    public static void writeFile(List<Double> list, String filename) {
         File directory = new File("batch_reports");
         BufferedWriter bw = null;
 
@@ -845,7 +901,7 @@ class Batch {
             if (!directory.exists())
                 directory.mkdirs();
 
-            File file = new File(directory, "delay_ticket_check.csv");
+            File file = new File(directory, filename + ".dat");
 
             if (!file.exists())
                 file.createNewFile();
@@ -854,8 +910,8 @@ class Batch {
             bw = new BufferedWriter(writer);
 
 
-            for (int i = 0; i < delaysTicketCheck.size(); i++) {
-                bw.append(String.valueOf(delaysTicketCheck.get(i)));
+            for (int i = 0; i < list.size(); i++) {
+                bw.append(String.valueOf(list.get(i)));
                 bw.append("\n");
                 bw.flush();
             }
@@ -870,12 +926,6 @@ class Batch {
                 ex.printStackTrace();
             }
         }
-
-        // todo others
-
-
-        System.out.println("");
-
     }
 
 

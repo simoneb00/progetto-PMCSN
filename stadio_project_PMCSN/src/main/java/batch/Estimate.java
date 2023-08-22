@@ -26,8 +26,8 @@ public class Estimate{
     static final double LOC = 0.95;    /* level of confidence,        */ 
                                        /* use 0.95 for 95% confidence */
 
-    public static void main(String[] args)
-    {
+public void createInterval(String filename) {
+
 	long   n    = 0;                     /* counts data points */
 	double sum  = 0.0;
 	double mean = 0.0;
@@ -41,7 +41,7 @@ public class Estimate{
 	Rvms rvms = new Rvms();
 
 	BufferedReader br = null;
-	File file = new File("batch_reports/delay_ticket_check.csv");
+	File file = new File("batch_reports/" + filename + ".dat");
 		try {
 
 			FileInputStream inputStream = new FileInputStream(file);
@@ -74,18 +74,19 @@ public class Estimate{
 	
 	stdev  = Math.sqrt(sum / n);
 	
-	DecimalFormat df = new DecimalFormat("###0.00");
+	DecimalFormat df = new DecimalFormat("###0.000000000");
 	
 	if (n > 1) {
 	    u = 1.0 - 0.5 * (1.0 - LOC);              /* interval parameter  */
 	    t = rvms.idfStudent(n - 1, u);            /* critical value of t */
 	    w = t * stdev / Math.sqrt(n - 1);         /* interval half width */
 
-	    System.out.print("\nbased upon " + n + " data points");
+		System.out.println(filename);
+	    System.out.print("based upon " + n + " data points");
 	    System.out.print(" and with " + (int) (100.0 * LOC + 0.5) + 
 		"% confidence\n");
 	    System.out.print("the expected value is in the interval ");
-	    System.out.print( df.format(mean) + " +/- " + df.format(w) + "\n");
+	    System.out.print( df.format(mean) + " +/- " + df.format(w) + "\n\n");
 	}
 	else{
 	    System.out.print("ERROR - insufficient data\n");
