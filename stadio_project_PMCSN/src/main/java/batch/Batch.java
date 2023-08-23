@@ -64,7 +64,7 @@ class Batch {
 
         long batchCounter = 0;
         int k = 128;
-        int b = 1024*7;
+        int b = 1024;
 
         /* lists for batch simulation */
 
@@ -109,6 +109,9 @@ class Batch {
         List<Double> serviceTimesFirstPerquisition = new ArrayList<>();
         List<Double> serviceTimesTurnstiles = new ArrayList<>();
         List<Double> serviceTimesSecondPerquisition = new ArrayList<>();
+
+        List<Double> skipsFirstPerquisition = new ArrayList<>();
+        List<Double> skipsSecondPerquisition = new ArrayList<>();
 
 
         /* stream index for the rng */
@@ -281,7 +284,9 @@ class Batch {
                 utilizationsFirstPerquisition.add(sumUtilizations / DEPARTURE_EVENT_FIRST_PERQUISITION);
                 serviceTimesFirstPerquisition.add(sumServices / sumServed);
 
+                skipsFirstPerquisition.add((double)skipCounterFirstPerquisition);
 
+                skipCounterFirstPerquisition = 0;
                 areaFirstPerquisition = 0;
                 indexFirstPerquisition = 0;
                 abandonsCounterFirstPerquisition = 0;
@@ -358,7 +363,9 @@ class Batch {
                 utilizationsSecondPerquisition.add(sumUtilizations / DEPARTURE_EVENT_SECOND_PERQUISITION);
                 serviceTimesSecondPerquisition.add(sumServices / sumServed);
 
+                skipsSecondPerquisition.add((double) skipCounterSecondPerquisition);
 
+                skipCounterSecondPerquisition = 0;
                 areaSecondPerquisition = 0;
                 indexSecondPerquisition = 0;
                 abandonsCounterSecondPerquisition = 0;
@@ -707,6 +714,12 @@ class Batch {
 
         /* FIRST PERQUISITION */
 
+        double allSkips = 0;
+        for (double skip : skipsFirstPerquisition) {
+            allSkips += skip;
+        }
+        System.out.println("Skips in first perquisition: " + allSkips / skipsFirstPerquisition.size());
+
         allRTs = 0;
         for (double rt : responseTimesFirstPerquisition) {
             allRTs += rt;
@@ -794,6 +807,12 @@ class Batch {
         System.out.println("");
 
         /* SECOND PERQUISITION */
+
+        allSkips = 0;
+        for (double skip : skipsSecondPerquisition) {
+            allSkips += skip;
+        }
+        System.out.println("Skips in second perquisition: " + allSkips / skipsSecondPerquisition.size());
 
         allRTs = 0;
         for (double rt : responseTimesSecondPerquisition) {

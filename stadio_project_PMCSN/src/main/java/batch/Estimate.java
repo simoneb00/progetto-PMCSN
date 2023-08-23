@@ -74,7 +74,7 @@ public void createInterval(String filename) {
 	
 	stdev  = Math.sqrt(sum / n);
 	
-	DecimalFormat df = new DecimalFormat("###0.000000000");
+	DecimalFormat df = new DecimalFormat("###0.00000");
 	
 	if (n > 1) {
 	    u = 1.0 - 0.5 * (1.0 - LOC);              /* interval parameter  */
@@ -87,6 +87,8 @@ public void createInterval(String filename) {
 		"% confidence\n");
 	    System.out.print("the expected value is in the interval ");
 	    System.out.print( df.format(mean) + " +/- " + df.format(w) + "\n\n");
+
+
 	}
 	else{
 	    System.out.print("ERROR - insufficient data\n");
