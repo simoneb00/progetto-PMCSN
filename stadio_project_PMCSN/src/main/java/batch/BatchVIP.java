@@ -39,8 +39,8 @@ class BatchVIP {
     public static void main(String[] args) {
 
         /* batch simulation parameters */
-        int b = 1024;
-        int k = 128;
+        int b = 128;
+        int k = 30;
 
         double currentBatchStartingTime = 0;
         double currentFirstArrivalTimeTC = 0;
@@ -129,7 +129,7 @@ class BatchVIP {
 
                 avgPopulationsTicketCheck.add(areaTicketCheck / ticketCheckActualTime);
 
-                for (s = 1; s <= DEPARTURE_EVENT_VIP_TICKET; s++)          /* adjust area to calculate */
+                for (s = 1; s <= SERVERS_VIP_TICKET; s++)          /* adjust area to calculate */
                     areaTicketCheck -= sum[s].service;                 /* averages for the queue   */
 
                 delaysTicketCheck.add(areaTicketCheck / indexTicketCheck);
@@ -139,13 +139,13 @@ class BatchVIP {
                 double sumServed = 0.0;
 
 
-                for (s = 1; s <= DEPARTURE_EVENT_VIP_TICKET; s++) {
+                for (s = 1; s <= SERVERS_VIP_TICKET; s++) {
                     sumUtilizations += sum[s].service / ticketCheckActualTime;
                     sumServices += sum[s].service;
                     sumServed += sum[s].served;
                 }
 
-                utilizationsTicketCheck.add(sumUtilizations / DEPARTURE_EVENT_VIP_TICKET);
+                utilizationsTicketCheck.add(sumUtilizations / SERVERS_VIP_TICKET);
                 serviceTimesTicketCheck.add(sumServices / sumServed);
 
 
@@ -153,7 +153,7 @@ class BatchVIP {
                 indexTicketCheck = 0;
                 abandonTicketCheck = 0;
 
-                for (s = 1; s <= DEPARTURE_EVENT_VIP_TICKET; s++) {
+                for (s = 1; s <= SERVERS_VIP_TICKET; s++) {
                     sum[s].served = 0;
                     sum[s].service = 0;
                 }
@@ -170,7 +170,7 @@ class BatchVIP {
 
                 avgPopulationsPerquisition.add(areaPerquisition / perquisitionActualTime);
 
-                for (s = ALL_EVENTS_VIP_TICKET + 1; s <= ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION; s++)          /* adjust area to calculate */
+                for (s = ALL_EVENTS_VIP_TICKET + 1; s <= ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION; s++)          /* adjust area to calculate */
                     areaPerquisition -= sum[s].service;                                                                /* averages for the queue   */
 
                 delaysPerquisition.add(areaPerquisition / indexPerquisition);
@@ -180,13 +180,13 @@ class BatchVIP {
                 sumServed = 0.0;
 
 
-                for (s = ALL_EVENTS_VIP_TICKET + 1; s <= ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION; s++) {
+                for (s = ALL_EVENTS_VIP_TICKET + 1; s <= ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION; s++) {
                     sumUtilizations += sum[s].service / perquisitionActualTime;
                     sumServices += sum[s].service;
                     sumServed += sum[s].served;
                 }
 
-                utilizationsPerquisition.add(sumUtilizations / DEPARTURE_EVENT_VIP_PERQUISITION);
+                utilizationsPerquisition.add(sumUtilizations / SERVERS_VIP_PERQUISITION);
                 serviceTimesPerquisition.add(sumServices / sumServed);
 
 
@@ -194,7 +194,7 @@ class BatchVIP {
                 indexPerquisition = 0;
                 abandonPerquisition = 0;
 
-                for (s = ALL_EVENTS_VIP_TICKET + 1; s <= ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION; s++) {
+                for (s = ALL_EVENTS_VIP_TICKET + 1; s <= ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION; s++) {
                     sum[s].served = 0;
                     sum[s].service = 0;
                 }
@@ -211,17 +211,17 @@ class BatchVIP {
                 break;
 
             if (!abandonsTicket.isEmpty()) {
-                events[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
-                events[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].x = 1;     // activate abandon
+                events[SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
+                events[SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].x = 1;     // activate abandon
             } else {
-                events[DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].x = 0;     // deactivate abandon
+                events[SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].x = 0;     // deactivate abandon
             }
 
             if (!abandonsPerquisition.isEmpty()){
-                events[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);  //TODO migliora
-                events[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 1;
+                events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);  //TODO migliora
+                events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 1;
             } else {
-                events[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 0;
+                events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 0;
             }
 
             e = m.nextEvent(events);                                         /* next event index */
@@ -238,7 +238,7 @@ class BatchVIP {
                 if (events[0].t > STOP)
                     events[0].x = 0;
 
-                if (numberTicketCheck <= DEPARTURE_EVENT_VIP_TICKET) {
+                if (numberTicketCheck <= SERVERS_VIP_TICKET) {
                     service = m.getService(r, V_TC_SR);
                     s = m.findOneTicketCheck(events);
                     sum[s].service += service;
@@ -248,7 +248,7 @@ class BatchVIP {
                 }
             }
 
-            else if (e == DEPARTURE_EVENT_VIP_TICKET + ABANDON_EVENT_VIP_TICKET) {    // process an abandon
+            else if (e == SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET) {    // process an abandon
                 abandonTicketCheck++;
                 abandonsTicket.remove(0);
             }
@@ -267,7 +267,7 @@ class BatchVIP {
                     /* here a new arrival in the perquisition servant is handled */
 
                     numberPerquisition++;
-                    if (numberPerquisition <= DEPARTURE_EVENT_VIP_PERQUISITION) {   // if false, there's queue
+                    if (numberPerquisition <= SERVERS_VIP_PERQUISITION) {   // if false, there's queue
                         service = m.getService(r, V_P_SR);
                         s = m.findOnePerquisition(events);
                         sum[s].service += service;
@@ -279,7 +279,7 @@ class BatchVIP {
                 }
             }
 
-            else if ((ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION <= e) && (e < ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION + DEPARTURE_EVENT_VIP_PERQUISITION)) {    // departure from perquisition
+            else if ((ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION <= e) && (e < ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION + SERVERS_VIP_PERQUISITION)) {    // departure from perquisition
 
                 if (firstCompletionPerquisition == 0)
                     firstCompletionPerquisition = t.current;
@@ -293,7 +293,7 @@ class BatchVIP {
                     indexPerquisition++;
                     s = e;
 
-                    if (numberPerquisition >= DEPARTURE_EVENT_VIP_PERQUISITION) {
+                    if (numberPerquisition >= SERVERS_VIP_PERQUISITION) {
                         service = m.getService(r, V_P_SR);
                         sum[s].service += service;
                         sum[s].served++;
@@ -304,7 +304,7 @@ class BatchVIP {
                 }
             }
 
-            else if (e == ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION) {
+            else if (e == ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION) {
                 abandonPerquisition++;
                 abandonsPerquisition.remove(0);
             }
@@ -318,7 +318,7 @@ class BatchVIP {
                 events[ALL_EVENTS_VIP_TICKET].x = 1;
 
                 s = e;
-                if (numberTicketCheck >= DEPARTURE_EVENT_VIP_TICKET) {     // there are jobs in queue
+                if (numberTicketCheck >= SERVERS_VIP_TICKET) {     // there are jobs in queue
                     service = m.getService(r, V_TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
@@ -334,100 +334,6 @@ class BatchVIP {
         /* BATCH SIMULATION RESULTS */
 
         System.out.println("Completed " + batchCounter + " batches");
-
-        /* TICKET CHECK */
-
-        double allRTs = 0;
-        for (double rt : responseTimesTicketCheck) {
-            allRTs += rt;
-        }
-        System.out.println("Mean response time for ticket check: " + allRTs / responseTimesTicketCheck.size());
-
-        double allDelays = 0;
-        for (double delay : delaysTicketCheck) {
-            allDelays += delay;
-        }
-        System.out.println("Average queueing time for ticket check: " + allDelays / delaysTicketCheck.size());
-
-        double allUtilizations = 0;
-        for (double u : utilizationsTicketCheck) {
-            allUtilizations += u;
-        }
-        System.out.println("Avg utilization for ticket check: " + allUtilizations / utilizationsTicketCheck.size());
-
-        double allInterarrivals = 0;
-        for (double i : interarrivalsTicketCheck) {
-            allInterarrivals += i;
-        }
-        System.out.println("Avg interarrivals for ticket check: " + allInterarrivals / interarrivalsTicketCheck.size());
-
-        double allAbandons = 0;
-        for (double a : allAbandonsTicketCheck) {
-            allAbandons += a;
-        }
-        System.out.println("Avg abandons for ticket check: " + allAbandons / allAbandonsTicketCheck.size());
-
-        double allServiceTimes = 0;
-        for (double st : serviceTimesTicketCheck) {
-            allServiceTimes += st;
-        }
-        System.out.println("Avg service time for ticket check: " + allServiceTimes / serviceTimesTicketCheck.size());
-
-        double allPopulations = 0;
-        for (double pop : avgPopulationsTicketCheck) {
-            allPopulations += pop;
-        }
-        System.out.println("Avg population for ticket check: " + allPopulations / avgPopulationsTicketCheck.size());
-
-
-        System.out.println("");
-
-
-        /* PERQUISITION */
-
-        allRTs = 0;
-        for (double rt : responseTimesPerquisition) {
-            allRTs += rt;
-        }
-        System.out.println("Mean response time for perquisition: " + allRTs / responseTimesPerquisition.size());
-
-        allDelays = 0;
-        for (double delay : delaysPerquisition) {
-            allDelays += delay;
-        }
-        System.out.println("Average queueing time for perquisition: " + allDelays / delaysPerquisition.size());
-
-        allUtilizations = 0;
-        for (double u : utilizationsPerquisition) {
-            allUtilizations += u;
-        }
-        System.out.println("Avg utilization for perquisition: " + allUtilizations / utilizationsPerquisition.size());
-
-        allInterarrivals = 0;
-        for (double i : interarrivalsPerquisition) {
-            allInterarrivals += i;
-        }
-        System.out.println("Avg interarrivals for perquisition: " + allInterarrivals / interarrivalsPerquisition.size());
-
-        allAbandons = 0;
-        for (double a : allAbandonsPerquisition) {
-            allAbandons += a;
-        }
-        System.out.println("Avg abandons for perquisition: " + allAbandons / allAbandonsPerquisition.size());
-
-
-        allServiceTimes = 0;
-        for (double st : serviceTimesPerquisition) {
-            allServiceTimes += st;
-        }
-        System.out.println("Avg service time for first perquisition: " + allServiceTimes / serviceTimesPerquisition.size());
-
-        allPopulations = 0;
-        for (double pop : avgPopulationsPerquisition) {
-            allPopulations += pop;
-        }
-        System.out.println("Avg population for first perquisition: " + allPopulations / avgPopulationsPerquisition.size());
-
 
         System.out.println("");
 
@@ -456,8 +362,8 @@ class BatchVIP {
 
         Estimate estimate = new Estimate();
 
-        List<String> filenames = List.of("delays_vip_ticket_check", "response_times_vip_ticket_check", "utilizations_vip_ticket_check", "populations_vip_ticket_check", "interarrivals_vip_ticket_check", "abandons_vip_ticket_check", "service_times_vip_ticket_check",
-                "delays_vip_perquisition", "response_times_vip_perquisition", "utilizations_vip_perquisition", "populations_vip_perquisition", "interarrivals_vip_perquisition", "abandons_vip_perquisition", "service_times_vip_perquisition"
+        List<String> filenames = List.of("response_times_vip_ticket_check", "delays_vip_ticket_check", "utilizations_vip_ticket_check", "interarrivals_vip_ticket_check", "abandons_vip_ticket_check", "service_times_vip_ticket_check", "populations_vip_ticket_check",
+                "response_times_vip_perquisition", "delays_vip_perquisition", "utilizations_vip_perquisition", "interarrivals_vip_perquisition", "abandons_vip_perquisition", "service_times_vip_perquisition", "populations_vip_perquisition"
                 );
 
         for (String filename : filenames) {
@@ -496,8 +402,7 @@ class BatchVIP {
          */
         r.selectStream(0);
 
-        // int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        int index = 0;  // todo verification step (forcing the first timeslot)
+        int index = 0;  // forcing the first timeslot
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
         return (sarrival);
@@ -540,7 +445,7 @@ class BatchVIP {
         while (event[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-        while (i < DEPARTURE_EVENT_VIP_TICKET) {         /* now, check the others to find which   */
+        while (i < SERVERS_VIP_TICKET) {         /* now, check the others to find which   */
             i++;                                             /* has been idle longest                 */
             if ((event[i].x == 0) && (event[i].t < event[s].t))
                 s = i;
@@ -560,7 +465,7 @@ class BatchVIP {
         while (event[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-        while (i < ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION) {         /* now, check the others to find which   */
+        while (i < ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION) {         /* now, check the others to find which   */
             i++;                                             /* has been idle longest                 */
             if ((event[i].x == 0) && (event[i].t < event[s].t))
                 s = i;

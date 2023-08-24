@@ -39,7 +39,7 @@ class MsqEvent {                     /* the next-event list    */
 class Msq {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 1 * 3600;        /* terminal (close the door) time  todo verification (only one hour)*/
+    static double STOP = 3 * 3600;        /* terminal (close the door) time  todo verification (only one hour)*/
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -107,7 +107,11 @@ class Msq {
         }
 
         /* events array initialization */
-        MsqEvent[] events = new MsqEvent[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION];
+        MsqEvent[] events = new MsqEvent[
+                        ALL_EVENTS_TICKET +
+                        ALL_EVENTS_FIRST_PERQUISITION +
+                        ALL_EVENTS_TURNSTILES +
+                        ALL_EVENTS_SECOND_PERQUISITION];
 
 
         /* sum array initialization (to keep track of services) */
@@ -720,8 +724,8 @@ class Msq {
          */
         r.selectStream(192);
 
-        // int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        int index = 0;  /* forcing the first time slot, for the verification step  todo verification step*/
+        int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
+        //int index = 0;  /* forcing the first time slot, for the verification step  todo verification step*/
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 

@@ -155,6 +155,10 @@ class Batch {
         List<Double> serviceTimesTurnstiles = new ArrayList<>();
         List<Double> serviceTimesSecondPerquisition = new ArrayList<>();
 
+        /* skips */
+        List<Double> skipsCountersFirstPerquisition = new ArrayList<>();
+        List<Double> skipsCountersSecondPerquisition = new ArrayList<>();
+
 
         double currentBatchStartingTime = 0;
         double currentFirstArrivalTimeTC = 0;
@@ -254,7 +258,7 @@ class Batch {
                 responseTimesFirstPerquisition.add(areaFirstPerquisition / indexFirstPerquisition);
                 interarrivalsFirstPerquisition.add((events[ALL_EVENTS_TICKET].t - currentFirstArrivalTimeFP) / indexFirstPerquisition);
                 allAbandonsFirstPerquisition.add((double) abandonsCounterFirstPerquisition / b);
-
+                skipsCountersFirstPerquisition.add((double) skipCounterFirstPerquisition);
 
                 double firstPerquisitionActualTime = t.current - currentBatchStartingTime;
 
@@ -331,7 +335,7 @@ class Batch {
                 responseTimesSecondPerquisition.add(areaSecondPerquisition / indexSecondPerquisition);
                 interarrivalsSecondPerquisition.add((events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t - currentFirstArrivalTimeSP) / indexSecondPerquisition);
                 allAbandonsSecondPerquisition.add((double) abandonsCounterSecondPerquisition / b);
-
+                skipsCountersSecondPerquisition.add((double) skipCounterSecondPerquisition);
 
                 double secondPerquisitionActualTime = t.current - currentBatchStartingTime;
 
@@ -681,6 +685,7 @@ class Batch {
         System.out.println("Completed " + batchCounter + " batches");
 
         System.out.println("");
+
 
         /* files creation for interval estimation */
 
