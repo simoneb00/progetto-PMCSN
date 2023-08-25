@@ -402,7 +402,7 @@ class BatchVIP {
          */
         r.selectStream(0);
 
-        int index = 0;  // forcing the first timeslot
+        int index = 1;  // forcing the first timeslot
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
         return (sarrival);

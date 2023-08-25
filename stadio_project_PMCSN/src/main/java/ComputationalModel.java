@@ -39,7 +39,7 @@ class MsqEvent {                     /* the next-event list    */
 class Msq {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 3 * 3600;        /* terminal (close the door) time  todo verification (only one hour)*/
+    static double STOP = 3 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -92,9 +92,9 @@ class Msq {
         /* first completion for every node */
         double ticketCheckFirstCompletion = 0;
         double firstPerquisitionFirstCompletion = 0;
+
         double turnstilesFirstCompletion = 0;
         double secondPerquisitionFirstCompletion = 0;
-
         Msq m = new Msq();
         Rngs r = new Rngs();
         r.plantSeeds(0);
@@ -244,6 +244,7 @@ class Msq {
 
                 /* skip first perquisition with probability x %, depending on the number of people in queue */
                 boolean skip = generateSkip(r, streamIndex, numberFirstPerquisition - SERVERS_FIRST_PERQUISITION);
+
 
                 if (skip) {
 
@@ -725,7 +726,6 @@ class Msq {
         r.selectStream(192);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        //int index = 0;  /* forcing the first time slot, for the verification step  todo verification step*/
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 

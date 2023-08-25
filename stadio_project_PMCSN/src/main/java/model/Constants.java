@@ -38,10 +38,10 @@ public class Constants {
 
     // ---- SERVICE RATES  [sec] ----
     // ticket check
-    public static final double TC_SR = 20;
+    public static final double TC_SR = 7;
 
     // perquisition
-    public static final double P_SR = 30;
+    public static final double P_SR = 20;
 
     // turnstiles
     public static final double T_SR = 5;

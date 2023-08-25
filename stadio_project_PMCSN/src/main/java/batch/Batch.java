@@ -7,7 +7,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.BatchUpdateException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,10 +106,16 @@ class Batch {
         Rngs r = new Rngs();
         r.plantSeeds(0);
 
+        /* time slots initialization */
+
+        for (int f = 0; f < 3; f++) {
+            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 12062, 3600 * f, 3600 * (f + 1) - 1);
+            slotList.add(slot);
+        }
 
         /* batch parameters */
         int k = 128;
-        int b = 1024 * 7;
+        int b = 1024*7;
 
         /* lists for batch simulation */
 
@@ -168,12 +173,6 @@ class Batch {
         long batchCounter = 0;
 
 
-        /* time slots initialization */
-
-        for (int f = 0; f < 3; f++) {
-            TimeSlot slot = new TimeSlot(PERCENTAGE[f], 12062, 3600 * f, 3600 * (f + 1) - 1);
-            slotList.add(slot);
-        }
 
         /* events array initialization */
         MsqEvent[] events = new MsqEvent[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION];
@@ -686,6 +685,9 @@ class Batch {
 
         System.out.println("");
 
+        System.out.println(skipsCountersFirstPerquisition);
+        System.out.println(skipsCountersSecondPerquisition);
+
 
         /* files creation for interval estimation */
 
@@ -889,8 +891,7 @@ class Batch {
          */
         r.selectStream(192);
 
-        // int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        int index = 0;  /* forcing the first time slot, for the verification step  todo verification step*/
+        int index = 0;  /* forcing the first time slot, for the verification step */
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 
