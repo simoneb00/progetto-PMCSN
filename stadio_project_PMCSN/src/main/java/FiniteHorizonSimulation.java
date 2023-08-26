@@ -598,7 +598,7 @@ public class FiniteHorizonSimulation {
             sumServed += sum[s].served;
         }
 
-        secondPerquisitionUtilizations.add(sumUtilizations / SERVERS_TURNSTILES);
+        secondPerquisitionUtilizations.add(sumUtilizations / SERVERS_SECOND_PERQUISITION);
         secondPerquisitionSTs.add(sumServices / sumServed);
 
 
@@ -759,6 +759,11 @@ public class FiniteHorizonSimulation {
         for (int i = 0; i < 1000; i++) {
             seeds[i+1] = simulation(seeds[i], r);
         }
+
+        System.out.println(ticketCheckUtilizations);
+        System.out.println(firstPerquisitionUtilizations);
+        System.out.println(turnstilesUtilizations);
+        System.out.println(secondPerquisitionUtilizations);
 
         /* TICKET CHECK */
         writeFile(ticketCheckDelays, "replication_reports", "delays_ticket_check");

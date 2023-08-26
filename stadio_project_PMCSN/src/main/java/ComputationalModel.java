@@ -39,7 +39,7 @@ class MsqEvent {                     /* the next-event list    */
 class Msq {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 3 * 3600;        /* terminal (close the door) time */
+    static double STOP = 1 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -725,7 +725,8 @@ class Msq {
          */
         r.selectStream(192);
 
-        int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
+        //int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
+        int index = 0;
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 
