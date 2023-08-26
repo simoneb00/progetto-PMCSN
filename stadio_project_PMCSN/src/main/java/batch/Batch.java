@@ -685,8 +685,10 @@ public class Batch {
 
         System.out.println("");
 
-        System.out.println(skipsCountersFirstPerquisition);
-        System.out.println(skipsCountersSecondPerquisition);
+        System.out.println(responseTimesTicketCheck);
+        System.out.println(responseTimesFirstPerquisition);
+        System.out.println(responseTimesTurnstiles);
+        System.out.println(responseTimesSecondPerquisition);
 
 
         /* files creation for interval estimation */
