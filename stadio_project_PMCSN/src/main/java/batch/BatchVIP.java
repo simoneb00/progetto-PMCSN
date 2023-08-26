@@ -341,22 +341,22 @@ class BatchVIP {
         /* files creation for interval estimation */
 
         /* TICKET CHECK */
-        writeFile(delaysTicketCheck, "delays_vip_ticket_check");
-        writeFile(responseTimesTicketCheck, "response_times_vip_ticket_check");
-        writeFile(utilizationsTicketCheck, "utilizations_vip_ticket_check");
-        writeFile(avgPopulationsTicketCheck, "populations_vip_ticket_check");
-        writeFile(interarrivalsTicketCheck, "interarrivals_vip_ticket_check");
-        writeFile(allAbandonsTicketCheck, "abandons_vip_ticket_check");
-        writeFile(serviceTimesTicketCheck, "service_times_vip_ticket_check");
+        writeFile(delaysTicketCheck, "batch_reports", "delays_vip_ticket_check");
+        writeFile(responseTimesTicketCheck, "batch_reports", "response_times_vip_ticket_check");
+        writeFile(utilizationsTicketCheck, "batch_reports", "utilizations_vip_ticket_check");
+        writeFile(avgPopulationsTicketCheck, "batch_reports", "populations_vip_ticket_check");
+        writeFile(interarrivalsTicketCheck, "batch_reports", "interarrivals_vip_ticket_check");
+        writeFile(allAbandonsTicketCheck, "batch_reports", "abandons_vip_ticket_check");
+        writeFile(serviceTimesTicketCheck, "batch_reports", "service_times_vip_ticket_check");
 
         /* FIRST PERQUISITION */
-        writeFile(delaysPerquisition, "delays_vip_perquisition");
-        writeFile(responseTimesPerquisition, "response_times_vip_perquisition");
-        writeFile(utilizationsPerquisition, "utilizations_vip_perquisition");
-        writeFile(avgPopulationsPerquisition, "populations_vip_perquisition");
-        writeFile(interarrivalsPerquisition, "interarrivals_vip_perquisition");
-        writeFile(allAbandonsPerquisition, "abandons_vip_perquisition");
-        writeFile(serviceTimesPerquisition, "service_times_vip_perquisition");
+        writeFile(delaysPerquisition, "batch_reports", "delays_vip_perquisition");
+        writeFile(responseTimesPerquisition, "batch_reports", "response_times_vip_perquisition");
+        writeFile(utilizationsPerquisition, "batch_reports", "utilizations_vip_perquisition");
+        writeFile(avgPopulationsPerquisition, "batch_reports", "populations_vip_perquisition");
+        writeFile(interarrivalsPerquisition, "batch_reports", "interarrivals_vip_perquisition");
+        writeFile(allAbandonsPerquisition, "batch_reports", "abandons_vip_perquisition");
+        writeFile(serviceTimesPerquisition, "batch_reports", "service_times_vip_perquisition");
 
         /* INTERVAL ESTIMATION */
 
@@ -367,7 +367,7 @@ class BatchVIP {
                 );
 
         for (String filename : filenames) {
-            estimate.createInterval(filename);
+            estimate.createInterval("batch_reports", filename);
         }
     }
 

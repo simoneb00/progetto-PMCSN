@@ -26,7 +26,7 @@ public class Estimate{
     static final double LOC = 0.95;    /* level of confidence,        */ 
                                        /* use 0.95 for 95% confidence */
 
-public void createInterval(String filename) {
+public void createInterval(String directory, String filename) {
 
 	long   n    = 0;                     /* counts data points */
 	double sum  = 0.0;
@@ -41,7 +41,7 @@ public void createInterval(String filename) {
 	Rvms rvms = new Rvms();
 
 	BufferedReader br = null;
-	File file = new File("batch_reports/" + filename + ".dat");
+	File file = new File(directory + "/" + filename + ".dat");
 		try {
 
 			FileInputStream inputStream = new FileInputStream(file);

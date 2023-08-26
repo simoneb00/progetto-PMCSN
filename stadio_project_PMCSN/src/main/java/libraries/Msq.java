@@ -32,7 +32,7 @@ class MsqEvent{                     /* the next-event list    */
 }
 
 
-class Msq {
+public class Msq {
   static double START   = 0.0;            /* initial (open the door)        */
   static double STOP    = 20000.0;        /* terminal (close the door) time */
   static int    SERVERS = 4;              /* number of servers              */
