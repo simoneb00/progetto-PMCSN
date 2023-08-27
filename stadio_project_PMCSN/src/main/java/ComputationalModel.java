@@ -39,7 +39,7 @@ class MsqEvent {                     /* the next-event list    */
 class Msq {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 1 * 3600;        /* terminal (close the door) time */
+    static double STOP = 3 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -614,8 +614,12 @@ class Msq {
 
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
+
+        if (queueSize > 656)
+            System.out.println("");
+
         rngs.selectStream(64);
-        double percentage = Math.min(0.8, (queueSize - 25.0) / 10.0);
+        double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
     }
 
@@ -725,8 +729,7 @@ class Msq {
          */
         r.selectStream(192);
 
-        //int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        int index = 0;
+        int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 
