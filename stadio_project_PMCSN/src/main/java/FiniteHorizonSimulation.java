@@ -608,8 +608,11 @@ public class FiniteHorizonSimulation {
     }
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
+        if (queueSize > 656)
+            System.out.println("");
+
         rngs.selectStream(64);
-        double percentage = Math.min(0.8, (queueSize - 25.0) / 10.0);
+        double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
     }
 

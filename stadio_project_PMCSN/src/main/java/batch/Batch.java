@@ -684,49 +684,47 @@ public class Batch {
         System.out.println("Completed " + batchCounter + " batches");
 
         System.out.println("");
-
-        System.out.println(responseTimesTicketCheck);
-        System.out.println(responseTimesFirstPerquisition);
-        System.out.println(responseTimesTurnstiles);
-        System.out.println(responseTimesSecondPerquisition);
-
+        
 
         /* files creation for interval estimation */
+        String directory = "batch_reports";
 
         /* TICKET CHECK */
-        writeFile(delaysTicketCheck, "batch_reports", "delays_ticket_check");
-        writeFile(responseTimesTicketCheck,"batch_reports", "response_times_ticket_check");
-        writeFile(utilizationsTicketCheck,"batch_reports", "utilizations_ticket_check");
-        writeFile(avgPopulationsTicketCheck,"batch_reports", "populations_ticket_check");
-        writeFile(interarrivalsTicketCheck,"batch_reports", "interarrivals_ticket_check");
-        writeFile(allAbandonsTicketCheck,"batch_reports", "abandons_ticket_check");
-        writeFile(serviceTimesTicketCheck, "batch_reports", "service_times_ticket_check");
+        writeFile(delaysTicketCheck, directory, "delays_ticket_check");
+        writeFile(responseTimesTicketCheck, directory, "response_times_ticket_check");
+        writeFile(utilizationsTicketCheck, directory, "utilizations_ticket_check");
+        writeFile(avgPopulationsTicketCheck, directory, "populations_ticket_check");
+        writeFile(interarrivalsTicketCheck, directory, "interarrivals_ticket_check");
+        writeFile(allAbandonsTicketCheck, directory, "abandons_ticket_check");
+        writeFile(serviceTimesTicketCheck, directory, "service_times_ticket_check");
 
         /* FIRST PERQUISITION */
-        writeFile(delaysFirstPerquisition, "batch_reports", "delays_first_perquisition");
-        writeFile(responseTimesFirstPerquisition, "batch_reports", "response_times_first_perquisition");
-        writeFile(utilizationsFirstPerquisition, "batch_reports", "utilizations_first_perquisition");
-        writeFile(avgPopulationsFirstPerquisition, "batch_reports", "populations_first_perquisition");
-        writeFile(interarrivalsFirstPerquisition, "batch_reports", "interarrivals_first_perquisition");
-        writeFile(allAbandonsFirstPerquisition, "batch_reports", "abandons_first_perquisition");
-        writeFile(serviceTimesFirstPerquisition, "batch_reports", "service_times_first_perquisition");
+        writeFile(delaysFirstPerquisition, directory, "delays_first_perquisition");
+        writeFile(responseTimesFirstPerquisition, directory, "response_times_first_perquisition");
+        writeFile(utilizationsFirstPerquisition, directory, "utilizations_first_perquisition");
+        writeFile(avgPopulationsFirstPerquisition, directory, "populations_first_perquisition");
+        writeFile(interarrivalsFirstPerquisition, directory, "interarrivals_first_perquisition");
+        writeFile(allAbandonsFirstPerquisition, directory, "abandons_first_perquisition");
+        writeFile(serviceTimesFirstPerquisition, directory, "service_times_first_perquisition");
+        writeFile(skipsCountersFirstPerquisition, directory, "skips_first_perquisition");
 
         /* TURNSTILES */
-        writeFile(delaysTurnstiles, "batch_reports", "delays_turnstiles");
-        writeFile(responseTimesTurnstiles, "batch_reports", "response_times_turnstiles");
-        writeFile(utilizationsTurnstiles, "batch_reports", "utilizations_turnstiles");
-        writeFile(avgPopulationsTurnstiles, "batch_reports", "populations_turnstiles");
-        writeFile(interarrivalsTurnstiles, "batch_reports", "interarrivals_turnstiles");
-        writeFile(serviceTimesTurnstiles, "batch_reports", "service_times_turnstiles");
+        writeFile(delaysTurnstiles, directory, "delays_turnstiles");
+        writeFile(responseTimesTurnstiles, directory, "response_times_turnstiles");
+        writeFile(utilizationsTurnstiles, directory, "utilizations_turnstiles");
+        writeFile(avgPopulationsTurnstiles, directory, "populations_turnstiles");
+        writeFile(interarrivalsTurnstiles, directory, "interarrivals_turnstiles");
+        writeFile(serviceTimesTurnstiles, directory, "service_times_turnstiles");
 
         /* SECOND PERQUISITION */
-        writeFile(delaysSecondPerquisition, "batch_reports", "delays_second_perquisition");
-        writeFile(responseTimesSecondPerquisition, "batch_reports", "response_times_second_perquisition");
-        writeFile(utilizationsSecondPerquisition, "batch_reports", "utilizations_second_perquisition");
-        writeFile(avgPopulationsSecondPerquisition, "batch_reports", "populations_second_perquisition");
-        writeFile(interarrivalsSecondPerquisition, "batch_reports", "interarrivals_second_perquisition");
-        writeFile(allAbandonsSecondPerquisition, "batch_reports", "abandons_second_perquisition");
-        writeFile(serviceTimesSecondPerquisition, "batch_reports", "service_times_second_perquisition");
+        writeFile(delaysSecondPerquisition, directory, "delays_second_perquisition");
+        writeFile(responseTimesSecondPerquisition, directory, "response_times_second_perquisition");
+        writeFile(utilizationsSecondPerquisition, directory, "utilizations_second_perquisition");
+        writeFile(avgPopulationsSecondPerquisition, directory, "populations_second_perquisition");
+        writeFile(interarrivalsSecondPerquisition, directory, "interarrivals_second_perquisition");
+        writeFile(allAbandonsSecondPerquisition, directory, "abandons_second_perquisition");
+        writeFile(serviceTimesSecondPerquisition, directory, "service_times_second_perquisition");
+        writeFile(skipsCountersSecondPerquisition, directory, "skips_second_perquisition");
 
 
         /* INTERVAL ESTIMATION */
@@ -734,13 +732,13 @@ public class Batch {
         Estimate estimate = new Estimate();
 
         List<String> filenames = List.of("response_times_ticket_check", "delays_ticket_check", "utilizations_ticket_check", "interarrivals_ticket_check", "abandons_ticket_check", "service_times_ticket_check", "populations_ticket_check",
-                "response_times_first_perquisition", "delays_first_perquisition", "utilizations_first_perquisition", "interarrivals_first_perquisition", "abandons_first_perquisition", "service_times_first_perquisition", "populations_first_perquisition",
+                "response_times_first_perquisition", "delays_first_perquisition", "utilizations_first_perquisition", "interarrivals_first_perquisition", "abandons_first_perquisition", "service_times_first_perquisition", "populations_first_perquisition", "skips_first_perquisition",
                 "response_times_turnstiles", "delays_turnstiles", "utilizations_turnstiles", "interarrivals_turnstiles", "service_times_turnstiles", "populations_turnstiles",
-                "response_times_second_perquisition", "delays_second_perquisition", "utilizations_second_perquisition", "interarrivals_second_perquisition", "abandons_second_perquisition", "service_times_second_perquisition", "populations_second_perquisition"
+                "response_times_second_perquisition", "delays_second_perquisition", "utilizations_second_perquisition", "interarrivals_second_perquisition", "abandons_second_perquisition", "service_times_second_perquisition", "populations_second_perquisition", "skips_second_perquisition"
         );
 
         for (String filename : filenames) {
-            estimate.createInterval("batch_reports", filename);
+            estimate.createInterval(directory, filename);
         }
 
     }
@@ -782,8 +780,11 @@ public class Batch {
 
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
+        if (queueSize > 656)
+            System.out.println("");
+
         rngs.selectStream(64);
-        double percentage = Math.min(0.8, (queueSize - 25.0) / 10.0);
+        double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
     }
 
@@ -893,7 +894,7 @@ public class Batch {
          */
         r.selectStream(192);
 
-        int index = 0;  /* forcing the first time slot, for the verification step */
+        int index = 2;  /* forcing the first time slot, for the verification step */
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 
