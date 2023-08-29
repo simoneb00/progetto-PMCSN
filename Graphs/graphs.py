@@ -1,4 +1,23 @@
 import matplotlib.pyplot as plt
+import numpy as np
+
+
+def read_data(file_path):
+    i = 1
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        data = [line.strip().split() for line in lines]
+        x = ['(10, 20, 8, 20)',
+             '(11, 21, 8, 20)',
+             '(12, 22, 8, 20)',
+             '(12, 22, 8, 21)',
+             '(13, 23, 8, 21)',
+             '(13, 25, 8, 21)',
+             '(13, 25, 8, 23)',
+             '(13, 25, 8, 24)']
+        y = [float(entry[0]) for entry in data]
+        print(y)
+    return x, y
 
 
 def plot(file_path, statistic, node):
@@ -33,6 +52,7 @@ if __name__ == "__main__":
     turnstiles = "Tornelli"
     second_perquisition = "Seconda perquisizione"
 
+    """
     plot("../batch_reports/response_times_ticket_check.dat", response_time, ticket_check)
     plot("../batch_reports/response_times_first_perquisition.dat", response_time, first_perquisition)
     plot("../batch_reports/response_times_turnstiles.dat", response_time, turnstiles)
@@ -41,3 +61,34 @@ if __name__ == "__main__":
     plot("../batch_reports/utilizations_first_perquisition.dat", utilization, first_perquisition)
     plot("../batch_reports/utilizations_turnstiles.dat", utilization, turnstiles)
     plot("../batch_reports/utilizations_second_perquisition.dat", utilization, second_perquisition)
+    """
+
+    file_paths = ['../experiments/ticket_check_rt.dat', '../experiments/first_perquisition_rt.dat', '../experiments/turnstiles_rt.dat', '../experiments/second_perquisition_rt.dat', '../experiments/total_rt.dat']
+
+    # Read data from each file
+    data = [read_data(file_path) for file_path in file_paths]
+
+    # Create a new figure and axis
+    plt.figure(figsize=(7, 12))
+    plt.xlabel('Configurazioni')
+    plt.ylabel('Tempi di Risposta')
+
+    nodes = ['Controllo biglietti', 'Prima perquisizione', 'Tornelli', 'Seconda perquisizione', 'Tempo di risposta totale']
+
+    # Plot data from each file
+    for i, (x, y) in enumerate(data, start=1):
+        label = f'{nodes[i-1]}'
+        plt.plot(x, y, label=label)
+
+    x = [0, 1, 2, 3, 4, 5, 6, 7]
+    label = 'Obiettivo (t.d.r. = 20 min)'
+    plt.plot(x, np.full(8, 1200), color='black', label=label)
+
+
+    plt.xticks(rotation=45, ha='right')
+
+    # Add legend
+    plt.legend()
+
+    # Display the plot
+    plt.show()
