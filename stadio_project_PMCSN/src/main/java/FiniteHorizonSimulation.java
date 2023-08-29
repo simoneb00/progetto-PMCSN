@@ -61,6 +61,8 @@ public class FiniteHorizonSimulation {
     static List<Double> turnstilesQueuePopulations = new ArrayList<>();
     static List<Double> secondPerquisitionQueuePopulations = new ArrayList<>();
 
+    static List<Double> skipsCountersFirstPerquisition = new ArrayList<>();
+    static List<Double> skipsCountersSecondPerquisition = new ArrayList<>();
 
     static final double START = 0.0;            /* initial (open the door)        */
     static final double STOP = 3 * 3600;        /* terminal (close the door) time */
@@ -529,6 +531,7 @@ public class FiniteHorizonSimulation {
         firstPerquisitionUtilizations.add(sumUtilizations / SERVERS_FIRST_PERQUISITION);
         firstPerquisitionSTs.add(sumServices / sumServed);
 
+        skipsCountersFirstPerquisition.add((double) skipCounterFirstPerquisition);
 
         /* TURNSTILES */
 
@@ -601,6 +604,7 @@ public class FiniteHorizonSimulation {
         secondPerquisitionUtilizations.add(sumUtilizations / SERVERS_SECOND_PERQUISITION);
         secondPerquisitionSTs.add(sumServices / sumServed);
 
+        skipsCountersSecondPerquisition.add((double) skipCounterSecondPerquisition);
 
         r.selectStream(256);
         return r.getSeed();
@@ -608,12 +612,10 @@ public class FiniteHorizonSimulation {
     }
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
-        if (queueSize > 656)
-            System.out.println("");
-
         rngs.selectStream(64);
         double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
+
     }
 
 
@@ -753,14 +755,15 @@ public class FiniteHorizonSimulation {
         return (e);
     }
 
-
     public static void main(String[] args) {
         long[] seeds = new long[1024];
-        seeds[0] = 123456789;
+        seeds[0] = 333;
         Rngs r = new Rngs();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 150; i++) {
             seeds[i+1] = simulation(seeds[i], r);
+            System.out.println(i+1);
         }
+
 
         System.out.println(ticketCheckUtilizations);
         System.out.println(firstPerquisitionUtilizations);
@@ -783,6 +786,7 @@ public class FiniteHorizonSimulation {
         writeFile(firstPerquisitionInterarrivals, "replication_reports", "interarrivals_first_perquisition");
         writeFile(firstPerquisitionSTs, "replication_reports", "service_times_first_perquisition");
         writeFile(firstPerquisitionQueuePopulations, "replication_reports", "queue_populations_first_perquisition");
+        writeFile(skipsCountersFirstPerquisition, "replication_reports", "skips_first_perquisition");
 
         /* TURNSTILES */
         writeFile(turnstilesDelays, "replication_reports", "delays_turnstiles");
@@ -800,6 +804,7 @@ public class FiniteHorizonSimulation {
         writeFile(secondPerquisitionInterarrivals, "replication_reports", "interarrivals_second_perquisition");
         writeFile(secondPerquisitionSTs, "replication_reports", "service_times_second_perquisition");
         writeFile(secondPerquisitionQueuePopulations, "replication_reports", "queue_populations_second_perquisition");
+        writeFile(skipsCountersSecondPerquisition, "replication_reports", "skips_second_perquisition");
 
 
         /* INTERVAL ESTIMATION */
@@ -807,9 +812,9 @@ public class FiniteHorizonSimulation {
         Estimate estimate = new Estimate();
 
         List<String> filenames = List.of("response_times_ticket_check", "delays_ticket_check", "utilizations_ticket_check", "interarrivals_ticket_check", "service_times_ticket_check", "populations_ticket_check",
-                "response_times_first_perquisition", "delays_first_perquisition", "utilizations_first_perquisition", "interarrivals_first_perquisition", "service_times_first_perquisition", "populations_first_perquisition", "queue_populations_first_perquisition",
+                "response_times_first_perquisition", "delays_first_perquisition", "utilizations_first_perquisition", "interarrivals_first_perquisition", "service_times_first_perquisition", "populations_first_perquisition", "queue_populations_first_perquisition", "skips_first_perquisition",
                 "response_times_turnstiles", "delays_turnstiles", "utilizations_turnstiles", "interarrivals_turnstiles", "service_times_turnstiles", "populations_turnstiles",
-                "response_times_second_perquisition", "delays_second_perquisition", "utilizations_second_perquisition", "interarrivals_second_perquisition", "service_times_second_perquisition", "populations_second_perquisition", "queue_populations_second_perquisition"
+                "response_times_second_perquisition", "delays_second_perquisition", "utilizations_second_perquisition", "interarrivals_second_perquisition", "service_times_second_perquisition", "populations_second_perquisition", "queue_populations_second_perquisition", "skips_second_perquisition"
         );
 
         for (String filename : filenames) {

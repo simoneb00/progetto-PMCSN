@@ -16,12 +16,12 @@ public class Events {
     //---- NOT VIP EVENTS ----
     // Ticket check
     public static int ARRIVAL_EVENT_TICKET = 1;
-    public static int SERVERS_TICKET = 3;
+    public static int SERVERS_TICKET = 13;
     public static int ABANDON_EVENT_TICKET = 1;
 
     // First perquisition
     public static int ARRIVAL_EVENT_FIRST_PERQUISIION = 1;
-    public static int SERVERS_FIRST_PERQUISITION = 7;
+    public static int SERVERS_FIRST_PERQUISITION = 25;
     public static int SKIP_EVENT_FIRST_PERQUISITION = 1;
     public static int ABANDON_EVENT_FIRST_PERQUISITION = 1;
 
@@ -32,7 +32,7 @@ public class Events {
 
     // Second perquisition
     public static int ARRIVAL_EVENT_SECOND_PERQUISIION = 1;
-    public static int SERVERS_SECOND_PERQUISITION = 7;
+    public static int SERVERS_SECOND_PERQUISITION = 24;
     public static int SKIP_EVENT_SECOND_PERQUISITION = 1;
     public static int ABANDON_EVENT_SECOND_PERQUISITION = 1;
 
