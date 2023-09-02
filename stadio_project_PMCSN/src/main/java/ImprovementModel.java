@@ -10,7 +10,30 @@ import static model.Events.*;
 
 import static model.Constants.*;
 
+// TODO  UPDATE THIS WHEN EVENTS CHANGE
+/*
+-TICKET CHECK-
+0 = ARRIVO
+1-10 = SERVIZIO
+11 = ABBANDONO
 
+-FIRST PERQUISITION-
+12 = ARRIVO
+13-32 = SERVIZIO
+33 = SKIP
+34 = ABBANDONO
+
+-TORNELLI-
+35 = ARRIVO
+36-43  = SERVIZIO
+
+-SECONDA PERQUISITION-
+44 = ARRIVO
+45-64 = SERVIZIO
+65 =  SKIP
+66 = ABBANDONO
+
+ */
 
 /*
  *  Network:
@@ -39,6 +62,8 @@ class ImprovementModel {
         long numberTurnstiles = 0;
         long numberSecondPerquisitionFirstQueue = 0;
         long numberSecondPerquisitionSecondQueue = 0;
+        long firstClassJobInQueue = 0;
+        long secondClassJobInQueue = 0;
 
         int e;      /* next event index */
         int s;      /* server index */
@@ -171,7 +196,6 @@ class ImprovementModel {
             } else {
                 events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1].x = 0;
             }
-
             e = m.nextEvent(events);    /* next event index */
             t.next = events[e].t;       /* next event time */
 
@@ -348,13 +372,15 @@ class ImprovementModel {
                     numberSecondPerquisitionSecondQueue++;
                 }
 
-                if (numberSecondPerquisitionFirstQueue + numberSecondPerquisitionFirstQueue <= SERVERS_SECOND_PERQUISITION) {
+                if (numberSecondPerquisitionFirstQueue + numberSecondPerquisitionSecondQueue <= SERVERS_SECOND_PERQUISITION) {
                     /* the total node population is below the total number of servers */
                     s = m.findOneSecondPerquisition(events);
 
                     /* mark s as service for the first/second queue */
+                    // bind server index with job type into the array
                     if (service < 10) {
                         try {
+                            // small job ( without bags)
                             secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 1);
                         } catch (Exception ex) {
                             ex.printStackTrace();
@@ -362,100 +388,103 @@ class ImprovementModel {
                     }
                     else {
                         try {
+                            // big job
                             secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 2);
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
                     }
 
-
-
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
                     events[s].x = 1;
+                }else{
+                    //UPDATE THE NUMBER OF JOBS IN QUEUE
+                    if (service<10)
+                        firstClassJobInQueue ++;
+                    else secondClassJobInQueue++;
                 }
 
 
             } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION)
                     && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION + SERVERS_SECOND_PERQUISITION)
-            ) {
+            ) { // SECOND PERQUISITION SERVICE
 
                 boolean isFromFirstQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1)) == 1);
                 boolean isFromSecondQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1)) == 2);
 
                 boolean skip = false;
 
-                if (isFromFirstQueue)
+                if (isFromFirstQueue) {
                     skip = generateSkip(r, streamIndex, numberSecondPerquisitionFirstQueue - SERVERS_SECOND_PERQUISITION);
-                else if (isFromSecondQueue)
+                }
+                else if (isFromSecondQueue){
                     skip = generateSkip(r, streamIndex, numberSecondPerquisitionSecondQueue - SERVERS_SECOND_PERQUISITION);
-                else
+                }
+                else{
                     throw new Exception("Unexpected behaviour");
+                }
 
+                //
+                if (isFromFirstQueue)
+                    numberSecondPerquisitionFirstQueue--;
+                else
+                    numberSecondPerquisitionSecondQueue--;
+
+                // SKIP caused by congestion
                 if (skip) {
-
                     double skipTime = t.current + 0.01;
                     skipsSecondPerquisition.add(skipTime);
+                    secondPerquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 0);
 
                 } else {
-
+                    // Update data of second perquisition queue and generate possible abandon
                     if (secondPerquisitionFirstCompletion == 0)
                         secondPerquisitionFirstCompletion = t.current;
 
+                    // update number o done perquisition
                     indexSecondPerquisition++;
-
-                    if (isFromFirstQueue)
-                        numberSecondPerquisitionFirstQueue--;
-                    else
-                        numberSecondPerquisitionSecondQueue--;
-
 
                     /* abandons are generated only if the perquisition has not been skipped */
                     boolean abandon = generateAbandon(r, streamIndex, P3);
                     if (abandon) {
                         double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
+                        secondPerquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 0);
                         abandonsSecondPerquisition.add(abandonTime);
                     }
                 }
 
                 s = e;
 
-                if (numberSecondPerquisitionFirstQueue >= SERVERS_SECOND_PERQUISITION) {
+                // Now, there is idle server, so re-generate service time for queued job
+                if (firstClassJobInQueue >= 1) {
+                    firstClassJobInQueue --;
+                    // GENERATE A SERVICE LESS THAN 10 SECONDS
                     do {
                         service = m.getService(r, 160, P_SR);
                     } while (!(service < 10));
-
+                    secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 1);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
-                } else if (numberSecondPerquisitionSecondQueue >= SERVERS_SECOND_PERQUISITION) {
+                    events[s].x = 1;
+                } else if (secondClassJobInQueue >= 1) {
+                    secondClassJobInQueue --;
+                    // GENERATE A SERVICE GREATER THEN 10 SECONDS
                     do {
                         service = m.getService(r, 160, P_SR);
                     } while ((service < 10));
-
+                    secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 2);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
+                    events[s].x = 1;
                 } else
                     events[s].x = 0;
 
 
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 2) {
-
-                boolean isFromFirstQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1)) == 1);
-                boolean isFromSecondQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1)) == 2);
-
-                /*
-                if (isFromFirstQueue)
-                    numberSecondPerquisitionFirstQueue--;
-                else if (isFromSecondQueue)
-                    numberSecondPerquisitionSecondQueue--;
-                else
-                    throw new Exception("Unexpected behavior");
-
-
-                 */
+            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 2) { // process a SKIP
 
                 indexSecondPerquisition++;
                 skipCounterSecondPerquisition++;
