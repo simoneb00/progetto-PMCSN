@@ -10,7 +10,30 @@ import static model.Events.*;
 
 import static model.Constants.*;
 
+/*
+TODO: Here there is the event list
+-TICKET CHECK-
+0 = ARRIVO
+1-10 = SERVIZIO
+11 = ABBANDONO
 
+-FIRST PERQUISITION-
+12 = ARRIVO
+13-32 = SERVIZIO
+33 = SKIP
+34 = ABBANDONO
+
+-TORNELLI-
+35 = ARRIVO
+36-43  = SERVIZIO
+
+-SECONDA PERQUISITION-
+44 = ARRIVO
+45-64 = SERVIZIO
+65 =  SKIP
+66 = ABBANDONO
+
+*/
 
 /*
  *  Network:

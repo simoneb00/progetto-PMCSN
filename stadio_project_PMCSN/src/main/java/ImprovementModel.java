@@ -6,41 +6,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static model.Constants.TC_SR;
-import static model.Events.*;
+import static model.ImprovedEvents.*;
 
 import static model.Constants.*;
 
 // TODO  UPDATE THIS WHEN EVENTS CHANGE
 /*
+IMRPOVED MODEL EVENTS
 -TICKET CHECK-
 0 = ARRIVO
 1-10 = SERVIZIO
 11 = ABBANDONO
 
--FIRST PERQUISITION-
-12 = ARRIVO
-13-32 = SERVIZIO
-33 = SKIP
-34 = ABBANDONO
-
 -TORNELLI-
-35 = ARRIVO
-36-43  = SERVIZIO
+12 = ARRIVO
+13-20 = SERVIZIO
 
--SECONDA PERQUISITION-
-44 = ARRIVO
-45-64 = SERVIZIO
-65 =  SKIP
-66 = ABBANDONO
-
- */
-
-/*
- *  Network:
- *  ----> ticket check ----------------------> first perquisition ------------> turnstiles ---------------------> second perquisition ------------------>
- *                               |      |                               ^    |                            |                                  ^   |
- *                               | P1   |              P4               |    | P2                         |                P5                |   | P3
- *                               V      |_______________________________|    V                            |__________________________________|   V
+-PERQUISITION-
+21 = ARRIVO
+22-41 = SERVIZIO
+42 =  SKIP
+43 = ABBANDONO
  */
 
 
@@ -60,8 +46,8 @@ class ImprovementModel {
         long numberTicketCheck = 0;
         long numberFirstPerquisition = 0;
         long numberTurnstiles = 0;
-        long numberSecondPerquisitionFirstQueue = 0;
-        long numberSecondPerquisitionSecondQueue = 0;
+        long ClassOneTotalPopulation = 0;
+        long ClassTwoTotalPopulation = 0;
         long firstClassJobInQueue = 0;
         long secondClassJobInQueue = 0;
 
@@ -89,16 +75,14 @@ class ImprovementModel {
 
         /* abandons list for ticket check and perquisitions */
         List<Double> abandonsTicketCheck = new ArrayList<>();
-        List<Double> abandonsFirstPerquisition = new ArrayList<>();
-        List<Double> abandonsSecondPerquisition = new ArrayList<>();
+        List<Double> abandonsPerquisition = new ArrayList<>();
 
         /* skip list for perquisitions */
-        List<Double> skipsFirstPerquisition = new ArrayList<>();
-        List<Double> skipsSecondPerquisition = new ArrayList<>();
+        List<Double> skipsPerquisition = new ArrayList<>();
 
         List<Integer> secondPerquisitionPriorityClassService = new ArrayList<>();
 
-        for (int i = 0; i < SERVERS_SECOND_PERQUISITION; i++) {
+        for (int i = 0; i < SERVERS_PERQUISITION; i++) {
             secondPerquisitionPriorityClassService.add(0);
         }
 
@@ -125,15 +109,14 @@ class ImprovementModel {
 
         /* events array initialization */
         MsqEvent[] events = new MsqEvent[
-                ALL_EVENTS_TICKET +
-                        ALL_EVENTS_FIRST_PERQUISITION +
+                        ALL_EVENTS_TICKET +
                         ALL_EVENTS_TURNSTILES +
-                        ALL_EVENTS_SECOND_PERQUISITION];
+                        ALL_EVENTS_PERQUISITION];
 
 
         /* sum array initialization (to keep track of services) */
-        MsqSum[] sum = new MsqSum[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION];
-        for (s = 0; s < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION; s++) {
+        MsqSum[] sum = new MsqSum[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION];
+        for (s = 0; s < ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION; s++) {
             events[s] = new MsqEvent();
             sum[s] = new MsqSum();
         }
@@ -147,7 +130,7 @@ class ImprovementModel {
         events[0].x = 1;
 
         /* all other servers are initially idle */
-        for (s = 1; s < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION; s++) {
+        for (s = 1; s < ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION; s++) {
             events[s].t = START;
             events[s].x = 0;
             sum[s].service = 0.0;
@@ -158,21 +141,15 @@ class ImprovementModel {
 
         /* START ITERATION */
 
-        while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + numberTurnstiles + (numberSecondPerquisitionFirstQueue + numberSecondPerquisitionSecondQueue) != 0)) {
+        while ((events[0].x != 0) || (numberTicketCheck + numberFirstPerquisition + numberTurnstiles + (ClassOneTotalPopulation + ClassTwoTotalPopulation) != 0)) {
 
             /* skip */
-            if (!skipsFirstPerquisition.isEmpty()) {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 2].t = skipsFirstPerquisition.get(0);
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 2].x = 1;
-            } else {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 2].x = 0;
-            }
 
-            if (!skipsSecondPerquisition.isEmpty()) {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 2].t = skipsSecondPerquisition.get(0);
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 2].x = 1;
+            if (!skipsPerquisition.isEmpty()) {
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].t = skipsPerquisition.get(0);
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].x = 1;
             } else {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 2].x = 0;
+                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].x = 0;
             }
 
             /* abandons */
@@ -183,18 +160,13 @@ class ImprovementModel {
                 events[ALL_EVENTS_TICKET - 1].x = 0;
             }
 
-            if (!abandonsFirstPerquisition.isEmpty()) {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 1].t = t.current;
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 1].x = 1;
-            } else {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 1].x = 0;
-            }
 
-            if (!abandonsSecondPerquisition.isEmpty()) {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1].t = t.current;
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1].x = 1;
+
+            if (!abandonsPerquisition.isEmpty()) {
+                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].t = t.current;
+                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].x = 1;
             } else {
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1].x = 0;
+                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].x = 0;
             }
             e = m.nextEvent(events);    /* next event index */
             t.next = events[e].t;       /* next event time */
@@ -204,12 +176,13 @@ class ImprovementModel {
             areaTicketCheck += (t.next - t.current) * numberTicketCheck;
             areaFirstPerquisition += (t.next - t.current) * numberFirstPerquisition;
             areaTurnstiles += (t.next - t.current) * numberTurnstiles;
-            areaSecondPerquisition += (t.next - t.current) * (numberSecondPerquisitionFirstQueue + numberSecondPerquisitionSecondQueue);
+            areaSecondPerquisition += (t.next - t.current) * (ClassOneTotalPopulation + ClassTwoTotalPopulation);
 
 
             t.current = t.next;     /* advance the clock */
 
-            if (e == ARRIVAL_EVENT_TICKET - 1) {    /* process an arrival (to the ticket check) */
+            if (e == ARRIVAL_EVENT_TICKET - 1) {
+                /* ticket check arrival */
                 numberTicketCheck++;
 
                 /* generate the next arrival */
@@ -226,12 +199,14 @@ class ImprovementModel {
                     events[s].t = t.current + service;
                     events[s].x = 1;
                 }
-            } else if (e == ALL_EVENTS_TICKET - 1) {      /* process an abandon (following the ticket check) */
+            } else if (e == ALL_EVENTS_TICKET - 1) {
+                /* ticket check abandon*/
 
                 abandonsCounterTicketCheck++;
                 abandonsTicketCheck.remove(0);
 
-            } else if (e == ALL_EVENTS_TICKET) {      /* arrival at first perquisition */
+            } else if (e == ALL_EVENTS_TICKET) {
+                /* turnstiles arrival  */
 
                 events[ALL_EVENTS_TICKET].x = 0;
 
@@ -244,108 +219,31 @@ class ImprovementModel {
                     abandonsTicketCheck.add(abandonTime);
 
                 } else {
-                    /* no abandon -> arrival at the first perquisition */
+                    /* no abandon -> generate arrival at turnstiles */
 
-                    numberFirstPerquisition++;
-                    if (numberFirstPerquisition <= SERVERS_FIRST_PERQUISITION) {
-                        service = m.getService(r, 32, P_SR);
-                        s = m.findOneFirstPerquisition(events);
+                    numberTurnstiles++;
+                    if (numberTurnstiles <= SERVERS_TURNSTILES) {
+                        service = m.getService(r, 96, T_SR);
+                        s = m.findOneTurnstiles(events);
                         sum[s].service += service;
                         sum[s].served++;
                         events[s].t = t.current + service;
                         events[s].x = 1;
+
                     }
                 }
-            } else if ((e > ALL_EVENTS_TICKET) && (e <= ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION)) {  /* service on one of the first perquisition servers */
+            } else if ((e >= ALL_EVENTS_TICKET+ ARRIVAL_EVENT_TURNSTILES ) && (e < ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES + SERVERS_TURNSTILES)) {
 
-                /* skip first perquisition with probability x %, depending on the number of people in queue */
-                boolean skip = generateSkip(r, streamIndex, numberFirstPerquisition - SERVERS_FIRST_PERQUISITION);
-
-
-                if (skip) {
-
-                    double skipTime = t.current + 0.01;
-                    skipsFirstPerquisition.add(skipTime);
-
-                } else {
-
-                    if (firstPerquisitionFirstCompletion == 0)
-                        firstPerquisitionFirstCompletion = t.current;
-
-                    indexFirstPerquisition++;
-                    numberFirstPerquisition--;
-
-                    /* generate an abandon with probability P2 */
-                    boolean abandon = generateAbandon(r, streamIndex, P2);
-                    if (abandon) {
-
-                        /* an abandon must be generated -> we must add it to the abandons list and schedule it */
-                        double abandonTime = t.current + 0.01;
-                        abandonsFirstPerquisition.add(abandonTime);
-
-                    } else {
-                        /* generate an arrival at the turnstiles */
-                        events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t = t.current;
-                        events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].x = 1;
-                    }
-                }
-
-                /* if there's queue, put a job on service on this server */
-                s = e;
-                if (numberFirstPerquisition >= SERVERS_FIRST_PERQUISITION) {
-                    service = m.getService(r, 32, P_SR);
-                    sum[s].service += service;
-                    sum[s].served++;
-                    events[s].t = t.current + service;
-                } else {
-                    /* if there's no queue, deactivate this server */
-                    events[s].x = 0;
-
-                }
-
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 2) {    /* skip first perquisition */
-                indexFirstPerquisition++;
-                numberFirstPerquisition--;
-                skipCounterFirstPerquisition++;
-                skipsFirstPerquisition.remove(0);
-
-                /* generate an arrival at turnstiles */
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t = t.current;
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].x = 1;
-
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION - 1) {    /* abandon after first perquisition */
-
-                abandonsCounterFirstPerquisition++;
-                abandonsFirstPerquisition.remove(0);
-
-            } else if ((e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION)) {  /* arrival at turnstiles */
-
-                events[e].x = 0;
-
-                numberTurnstiles++;
-                if (numberTurnstiles <= SERVERS_TURNSTILES) {
-                    service = m.getService(r, 96, T_SR);
-                    s = m.findOneTurnstiles(events);
-                    sum[s].service += service;
-                    sum[s].served++;
-                    events[s].t = t.current + service;
-                    events[s].x = 1;
-
-                }
-
-            } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES) && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ARRIVAL_EVENT_TURNSTILES + SERVERS_TURNSTILES)) {
-
-                /* service at the turnstile e */
-
+                /* turnstile service */
                 if (turnstilesFirstCompletion == 0)
                     turnstilesFirstCompletion = t.current;
 
                 indexTurnstiles++;
                 numberTurnstiles--;
 
-                /* generate an arrival at the second perquisition center */
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t = t.current;
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].x = 1;
+                /* generate an arrival at perquisition center */
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES].t = t.current;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES].x = 1;
 
                 s = e;
                 if (numberTurnstiles >= SERVERS_TURNSTILES) {
@@ -358,30 +256,30 @@ class ImprovementModel {
                     events[s].x = 0;
                 }
 
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES) {    /* arrival at second perquisition */
+            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES) {
+                /*  perquisition arrival */
 
-
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].x = 0;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES].x = 0;
 
                 service = m.getService(r, 160, P_SR);
                 if (service < 10) {
                     /* first queue */
-                    numberSecondPerquisitionFirstQueue++;
+                    ClassOneTotalPopulation++;
                 } else {
                     /* second queue */
-                    numberSecondPerquisitionSecondQueue++;
+                    ClassTwoTotalPopulation++;
                 }
 
-                if (numberSecondPerquisitionFirstQueue + numberSecondPerquisitionSecondQueue <= SERVERS_SECOND_PERQUISITION) {
+                if (ClassOneTotalPopulation + ClassTwoTotalPopulation <= SERVERS_PERQUISITION) {
                     /* the total node population is below the total number of servers */
-                    s = m.findOneSecondPerquisition(events);
+                    s = m.findPerquisition(events);
 
                     /* mark s as service for the first/second queue */
                     // bind server index with job type into the array
                     if (service < 10) {
                         try {
                             // small job ( without bags)
-                            secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 1);
+                            secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 1);
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
@@ -389,7 +287,7 @@ class ImprovementModel {
                     else {
                         try {
                             // big job
-                            secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 2);
+                            secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 2);
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
@@ -407,20 +305,21 @@ class ImprovementModel {
                 }
 
 
-            } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION)
-                    && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION + SERVERS_SECOND_PERQUISITION)
-            ) { // SECOND PERQUISITION SERVICE
+            } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION)
+                    && (e < ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION + SERVERS_PERQUISITION)
+            ) {
+                // Perquisition service
 
-                boolean isFromFirstQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1)) == 1);
-                boolean isFromSecondQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1)) == 2);
+                boolean isFromFirstQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1)) == 1);
+                boolean isFromSecondQueue = (secondPerquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1)) == 2);
 
                 boolean skip = false;
 
                 if (isFromFirstQueue) {
-                    skip = generateSkip(r, streamIndex, numberSecondPerquisitionFirstQueue - SERVERS_SECOND_PERQUISITION);
+                    skip = generateSkip(r, streamIndex, ClassOneTotalPopulation - SERVERS_PERQUISITION);
                 }
                 else if (isFromSecondQueue){
-                    skip = generateSkip(r, streamIndex, numberSecondPerquisitionSecondQueue - SERVERS_SECOND_PERQUISITION);
+                    skip = generateSkip(r, streamIndex, ClassTwoTotalPopulation - SERVERS_PERQUISITION);
                 }
                 else{
                     throw new Exception("Unexpected behaviour");
@@ -428,15 +327,15 @@ class ImprovementModel {
 
                 //
                 if (isFromFirstQueue)
-                    numberSecondPerquisitionFirstQueue--;
+                    ClassOneTotalPopulation--;
                 else
-                    numberSecondPerquisitionSecondQueue--;
+                    ClassTwoTotalPopulation--;
 
                 // SKIP caused by congestion
                 if (skip) {
                     double skipTime = t.current + 0.01;
-                    skipsSecondPerquisition.add(skipTime);
-                    secondPerquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 0);
+                    skipsPerquisition.add(skipTime);
+                    secondPerquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 0);
 
                 } else {
                     // Update data of second perquisition queue and generate possible abandon
@@ -450,8 +349,8 @@ class ImprovementModel {
                     boolean abandon = generateAbandon(r, streamIndex, P3);
                     if (abandon) {
                         double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
-                        secondPerquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 0);
-                        abandonsSecondPerquisition.add(abandonTime);
+                        secondPerquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 0);
+                        abandonsPerquisition.add(abandonTime);
                     }
                 }
 
@@ -464,7 +363,7 @@ class ImprovementModel {
                     do {
                         service = m.getService(r, 160, P_SR);
                     } while (!(service < 10));
-                    secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 1);
+                    secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 1);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -475,7 +374,7 @@ class ImprovementModel {
                     do {
                         service = m.getService(r, 160, P_SR);
                     } while ((service < 10));
-                    secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1), 2);
+                    secondPerquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 2);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -484,25 +383,26 @@ class ImprovementModel {
                     events[s].x = 0;
 
 
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 2) { // process a SKIP
-
+            } else if (e == ALL_EVENTS_TICKET + + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2) {
+                // perquisition SKIP
                 indexSecondPerquisition++;
                 skipCounterSecondPerquisition++;
-                skipsSecondPerquisition.remove(0);
+                skipsPerquisition.remove(0);
 
-            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1) {
-                /* abandon after second perquisition */
+            } else if (e == ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1) {
+                /*  perquisition  abandon  */
                 abandonsCounterSecondPerquisition++;
-                abandonsSecondPerquisition.remove(0);
+                abandonsPerquisition.remove(0);
 
-            } else {    /* ticket check service */
+            } else {
+                /* ticket check service */
                 if (ticketCheckFirstCompletion == 0)
                     ticketCheckFirstCompletion = t.current;
 
                 indexTicketCheck++;
                 numberTicketCheck--;
 
-                /* generate an arrival at the first perquisition */
+                /* generate an arrival at the turnstiles */
                 events[ALL_EVENTS_TICKET].t = t.current;
                 events[ALL_EVENTS_TICKET].x = 1;
 
@@ -574,63 +474,14 @@ class ImprovementModel {
 
         System.out.println("");
 
-
-        /* FIRST PERQUISITION */
-
-        System.out.println("\nfor " + indexFirstPerquisition + " jobs the first perquisition statistics are:\n");
-        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET].t / indexFirstPerquisition));
-        System.out.println("  avg response time ........... =   " + f.format(areaFirstPerquisition / indexFirstPerquisition));
-
-        double firstPerquisitionFinalTime = 0;
-        double firstPerquisitionMean = 0;
-        for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION; s++) {
-            firstPerquisitionMean += events[s].t;
-            if (events[s].t > firstPerquisitionFinalTime)
-                firstPerquisitionFinalTime = events[s].t;
-        }
-
-        double firstPerquisitionActualTime = firstPerquisitionFinalTime - firstPerquisitionFirstCompletion;
-
-        System.out.println("  avg # in node ...... =   " + f.format(areaFirstPerquisition / firstPerquisitionActualTime));
-
-        System.out.println("# abandons: " + abandonsCounterFirstPerquisition);
-        System.out.println("# skips: " + skipCounterFirstPerquisition);
-
-        for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION; s++)          /* adjust area to calculate */
-            areaFirstPerquisition -= sum[s].service;                                                                     /* averages for the queue   */
-
-
-        System.out.println("  avg delay .......... =   " + f.format(areaFirstPerquisition / indexFirstPerquisition));
-        System.out.println("  avg # in queue ..... =   " + f.format(areaFirstPerquisition / firstPerquisitionActualTime));
-
-        sumUtilizations = 0.0;
-        sumServices = 0.0;
-        sumServed = 0.0;
-
-        System.out.println("\nthe server statistics are:\n");
-        System.out.println("    server     utilization     avg service      share");
-        for (s = ALL_EVENTS_TICKET + 1; s <= ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION; s++) {
-            System.out.print("       " + (s - ALL_EVENTS_TICKET) + "          " + g.format(sum[s].service / firstPerquisitionActualTime) + "            ");
-            System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexFirstPerquisition));
-            sumUtilizations += sum[s].service / firstPerquisitionActualTime;
-            sumServices += sum[s].service;
-            sumServed += sum[s].served;
-        }
-        System.out.println("avg utilization = " + g.format(sumUtilizations / SERVERS_FIRST_PERQUISITION));
-        System.out.println("avg service = " + g.format(sumServices / sumServed));
-
-        System.out.println("");
-
-
         /* TURNSTILES */
-
         System.out.println("\nfor " + indexTurnstiles + " jobs the turnstiles statistics are:\n");
-        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION].t / indexTurnstiles));
+        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET ].t / indexTurnstiles));
         System.out.println("  avg response time ........... =   " + f.format(areaTurnstiles / indexTurnstiles));
 
         double turnstilesFinalTime = 0;
         double turnstilesMean = 0;
-        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + SERVERS_TURNSTILES; s++) {
+        for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++) {
             turnstilesMean += events[s].t;
             if (events[s].t > turnstilesFinalTime)
                 turnstilesFinalTime = events[s].t;
@@ -641,7 +492,7 @@ class ImprovementModel {
         System.out.println("  avg # in node ...... =   " + f.format(areaTurnstiles / turnstilesActualTime));
 
 
-        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + SERVERS_TURNSTILES; s++)
+        for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES; s <= ALL_EVENTS_TICKET  + SERVERS_TURNSTILES; s++)
             /* adjust area to calculate */
             areaTurnstiles -= sum[s].service;                                                                     /* averages for the queue   */
 
@@ -654,8 +505,8 @@ class ImprovementModel {
 
         System.out.println("\nthe server statistics are:\n");
         System.out.println("    server     utilization     avg service      share");
-        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + SERVERS_TURNSTILES; s++) {
-            System.out.print("       " + (s - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION) + "          " + g.format(sum[s].service / turnstilesActualTime) + "            ");
+        for (s = ALL_EVENTS_TICKET  + ARRIVAL_EVENT_TURNSTILES; s <= ALL_EVENTS_TICKET  + SERVERS_TURNSTILES; s++) {
+            System.out.print("       " + (s - ALL_EVENTS_TICKET ) + "          " + g.format(sum[s].service / turnstilesActualTime) + "            ");
             System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTurnstiles));
             sumUtilizations += sum[s].service / turnstilesActualTime;
             sumServices += sum[s].service;
@@ -666,14 +517,14 @@ class ImprovementModel {
 
         System.out.println("");
 
-        /* SECOND PERQUISITION */
+        /* PERQUISITION */
 
         System.out.println("\nfor " + indexSecondPerquisition + " jobs the second perquisition statistics are:\n");
-        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES].t / indexSecondPerquisition));
+        System.out.println("  avg interarrivals .. =   " + f.format(events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES].t / indexSecondPerquisition));
         System.out.println("  avg response time .. =   " + f.format(areaSecondPerquisition / indexSecondPerquisition));
 
         double secondPerquisitionFinalTime = 0;
-        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + SERVERS_SECOND_PERQUISITION; s++) {
+        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION; s <= ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + SERVERS_PERQUISITION; s++) {
             if (events[s].t > secondPerquisitionFinalTime)
                 secondPerquisitionFinalTime = events[s].t;
         }
@@ -685,14 +536,14 @@ class ImprovementModel {
         System.out.println("# abandons: " + abandonsCounterSecondPerquisition);
         System.out.println("# skips: " + skipCounterSecondPerquisition);
 
-        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + SERVERS_SECOND_PERQUISITION; s++)
+        for (s = ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION; s <= ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + SERVERS_PERQUISITION; s++)
             /* adjust area to calculate */
             areaSecondPerquisition -= sum[s].service;                                                                    /* averages for the queue   */
 
         System.out.println("\nthe server statistics are:\n");
         System.out.println("    server     utilization     avg service      share");
-        for (s = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + SERVERS_SECOND_PERQUISITION; s++) {
-            System.out.print("       " + (s - ALL_EVENTS_TICKET - ALL_EVENTS_FIRST_PERQUISITION - ALL_EVENTS_TURNSTILES) + "          " + g.format(sum[s].service / secondPerquisitionActualTime) + "            ");
+        for (s = ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION; s <= ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + SERVERS_PERQUISITION; s++) {
+            System.out.print("       " + (s - ALL_EVENTS_TICKET  - ALL_EVENTS_TURNSTILES) + "          " + g.format(sum[s].service / secondPerquisitionActualTime) + "            ");
             System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexSecondPerquisition));
         }
 
@@ -722,13 +573,13 @@ class ImprovementModel {
          */
         int s;
 
-        int i = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + 1;
+        int i = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES;
 
         while (events[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
 
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + SERVERS_TURNSTILES) {         /* now, check the others to find which   */
+        while (i < ALL_EVENTS_TICKET + SERVERS_TURNSTILES) {         /* now, check the others to find which   */
             i++;                                                                                             /* has been idle longest                 */
             if ((events[i].x == 0) && (events[i].t < events[s].t))
                 s = i;
@@ -758,39 +609,20 @@ class ImprovementModel {
         return (s);
     }
 
-    int findOneFirstPerquisition(MsqEvent[] events) {
+
+    int findPerquisition(MsqEvent[] events) {
         /* -----------------------------------------------------
          * return the index of the available server idle longest
          * -----------------------------------------------------
          */
         int s;
 
-        int i = ALL_EVENTS_TICKET + 1;
+        int i = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION;
 
         while (events[i].x == 1)       /* find the index of the first available */
             i++;                      /* (idle) server                         */
         s = i;
-        while (i < ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION) {         /* now, check the others to find which   */
-            i++;                                             /* has been idle longest                 */
-            if ((events[i].x == 0) && (events[i].t < events[s].t))
-                s = i;
-        }
-        return (s);
-    }
-
-    int findOneSecondPerquisition(MsqEvent[] events) {
-        /* -----------------------------------------------------
-         * return the index of the available server idle longest
-         * -----------------------------------------------------
-         */
-        int s;
-
-        int i = ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION;
-
-        while (events[i].x == 1)       /* find the index of the first available */
-            i++;                      /* (idle) server                         */
-        s = i;
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + SERVERS_SECOND_PERQUISITION) {         /* now, check the others to find which   */
+        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + SERVERS_PERQUISITION) {         /* now, check the others to find which   */
             i++;                                             /* has been idle longest                 */
             if ((events[i].x == 0) && (events[i].t < events[s].t))
                 s = i;
@@ -836,7 +668,7 @@ class ImprovementModel {
         while (event[i].x == 0)       /* find the index of the first 'active' */
             i++;                        /* element in the event list            */
         e = i;
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ALL_EVENTS_SECOND_PERQUISITION - 1) {         /* now, check the others to find which  */
+        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1) {         /* now, check the others to find which  */
             i++;                        /* event type is most imminent          */
             if ((event[i].x == 1) && (event[i].t < event[e].t))
                 e = i;
