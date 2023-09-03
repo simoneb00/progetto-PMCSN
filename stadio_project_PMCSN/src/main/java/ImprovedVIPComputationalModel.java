@@ -1,27 +1,16 @@
-/* -------------------------------------------------------------------------
- * This program is a next-event simulation of a multi-server, single-queue
- * service node.  The service node is assumed to be initially idle, no
- * arrivals are permitted after the terminal time STOP and the node is then
- * purged by processing any remaining jobs.
- *
- * Name              : Msq.java (Multi-Server Queue)
- * Authors           : Steve Park & Dave Geyer
- * Translated by     : Jun Wang
- * Language          : Java
- * Latest Revision   : 6-16-06
- * -------------------------------------------------------------------------
- */
+import libraries.Rngs;
+import model.TimeSlot;
 
-import java.lang.*;
-import java.text.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import libraries.*;
-import model.*;
-
 import static model.Constants.*;
 import static model.Events.*;
+import static model.ImprovedEvents.ALL_EVENTS_TICKET;
+import static model.ImprovedEvents.ALL_EVENTS_TURNSTILES;
+import static model.ImprovedEvents.SERVERS_PERQUISITION;
+
 
 //  TODO  UPDATE THIS WHEN EVENTS CHANGE
 /*
@@ -36,25 +25,10 @@ import static model.Events.*;
  12: ABBANDONO
  */
 
-class VIPMsqT {
-    double current;                   /* current time                       */
-    double next;                      /* next (most imminent) event time    */
-}
+ class ImprovedVIPComputationalModel {
 
-class VIPMsqSum {                      /* accumulated sums of                */
-    double service;                   /*   service times                    */
-    long served;                    /*   number served                    */
-}
-
-class VIPMsqEvent {                     /* the next-event list    */
-    double t;                         /*   next event time      */
-    int x;                         /*   event status, 0 or 1 */
-}
-
-
-class VIPMsq {
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 3 * 3600;        /* terminal (close the door) time todo verification step (put back 3 * 3600)*/
+    static double STOP = 3 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -63,7 +37,10 @@ class VIPMsq {
 
         int streamIndex = 1;
         long numberTicketCheck = 0;   /* number in the ticket check node    */
-        long numberPerquisition = 0;  /* number in the perquisition node    */
+        long classOneTotalPopulation = 0; /* job number in perquisition first class node */
+        long classTwoTotalPopulation = 0; /* job number in perquisition second class node */
+        long firstClassJobInQueue = 0; /* job number in perquisition first class queue */
+        long secondClassJobInQueue = 0; /* job number in perquisition second class queue */
         int e;                      /* next event index                    */
         int s;                      /* server index                        */
         long indexPerquisition = 0;            /* used to count processed jobs in perquisition        */
@@ -76,9 +53,16 @@ class VIPMsq {
         List<Double> abandonsTicket = new ArrayList<>();
         List<Double> abandonsPerquisition = new ArrayList<>();
         double firstCompletionTicketCheck = 0;
-        double firstCompletionPerquisition = 0;
+        double perquisitionFirstCompletetion = 0;
 
-        VIPMsq m = new VIPMsq();
+        ImprovedVIPComputationalModel m = new ImprovedVIPComputationalModel();
+        List<Integer> perquisitionPriorityClassService = new ArrayList<>();
+
+        for (int i = 0; i < SERVERS_VIP_PERQUISITION; i++) {
+            perquisitionPriorityClassService.add(0);
+        }
+
+
         Rngs r = new Rngs();
         r.plantSeeds(0);
 
@@ -108,10 +92,7 @@ class VIPMsq {
             sum[s].served = 0;
         }
 
-
-
-
-        while ((event[0].x != 0) || (numberTicketCheck + numberPerquisition != 0)) {
+        while ((event[0].x != 0) || (numberTicketCheck + classOneTotalPopulation + classTwoTotalPopulation != 0)) {
 
             if (!abandonsTicket.isEmpty()) {
                 event[SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET].t = abandonsTicket.get(0);
@@ -130,10 +111,11 @@ class VIPMsq {
             e = m.nextEvent(event);                                         /* next event index */
             t.next = event[e].t;                                            /* next event time  */
             areaTicketCheck += (t.next - t.current) * numberTicketCheck;    /* update integral  */
-            areaPerquisition += (t.next - t.current) * numberPerquisition;  /* update integral  */
+            areaPerquisition += (t.next - t.current) * (classOneTotalPopulation + classTwoTotalPopulation);  /* update integral  */
             t.current = t.next;                                             /* advance the clock*/
 
-            if (e == ARRIVAL_EVENT_VIP_TICKET - 1) {     /* process an arrival */
+            if (e == ARRIVAL_EVENT_VIP_TICKET - 1) {
+                /* ticket check arrival */
 
                 numberTicketCheck++;
 
@@ -142,7 +124,7 @@ class VIPMsq {
                     event[0].x = 0;
 
                 if (numberTicketCheck <= SERVERS_VIP_TICKET) {
-                    service = m.getService(r, V_TC_SR);
+                    service = m.getService(r,0, V_TC_SR);
                     s = m.findOneTicketCheck(event);
                     sum[s].service += service;
                     sum[s].served++;
@@ -151,78 +133,140 @@ class VIPMsq {
                 }
             }
 
-            else if (e == SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET) {    // process an abandon
+            else if (e == SERVERS_VIP_TICKET + ABANDON_EVENT_VIP_TICKET) {
+                // ticket check abandon
                 abandonTicketCheck++;
                 abandonsTicket.remove(0);
             }
 
-            else if (e == ALL_EVENTS_VIP_TICKET){      /* process a departure (i.e. arrival to vip perquisition) */
-
+            else if (e == ALL_EVENTS_VIP_TICKET){
+                /* perquisition arrival */
                 event[ALL_EVENTS_VIP_TICKET].x = 0;
 
-                // generate, with probability P6, an abandon
+                // generate, with probability P4, an abandon
+                // (after eventually failed ticket check)
                 boolean abandon = generateAbandon(r, streamIndex, P4);
                 if (abandon) {  // add an abandon
                     double abandonTime = t.current + 0.01;  // this will be the next abandon time (it must be small in order to execute the abandon as next event)
                     abandonsTicket.add(abandonTime);
-                } else {    // arrival in the next servant (single server queue, perquisition)
+                } else{
+                    // if there isn't abandon process arrival
+                    service = m.getService(r, 4, V_P_SR);
+                    if (service < 10) {
+                        /* first queue */
+                        classOneTotalPopulation++;
+                    } else {
+                        /* second queue */
+                        classTwoTotalPopulation++;
+                    }
+                    if (classOneTotalPopulation + classTwoTotalPopulation <= SERVERS_VIP_PERQUISITION) {
+                        /* the total node population is below the total number of servers */
+                        s = m.findPerquisition(event);
 
-                    /* here a new arrival in the perquisition servant is handled */
+                        /* mark s as service for the first/second queue */
+                        // bind server index with job type into the array
+                        if (service < 10) {
+                            try {
+                                // small job ( without bags)
+                                perquisitionPriorityClassService.set(s - (ALL_EVENTS_VIP_TICKET + 1), 1);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                        else {
+                            try {
+                                // big job
+                                perquisitionPriorityClassService.set(s - (ALL_EVENTS_VIP_TICKET + 1), 2);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }
 
-                    numberPerquisition++;
-                    if (numberPerquisition <= SERVERS_VIP_PERQUISITION) {   // if false, there's queue
-                        service = m.getService(r, V_P_SR);
-                        s = m.findOnePerquisition(event);
                         sum[s].service += service;
                         sum[s].served++;
                         event[s].t = t.current + service;
                         event[s].x = 1;
-
+                    }else{
+                        //UPDATE THE NUMBER OF JOBS IN QUEUE
+                        if (service<10)
+                            firstClassJobInQueue ++;
+                        else secondClassJobInQueue++;
                     }
+
+
                 }
+
+
             }
 
-            else if ((ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION <= e) && (e < ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION + SERVERS_VIP_PERQUISITION)) {    // departure from perquisition
+            else if ((ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION <= e) && (e < ALL_EVENTS_VIP_TICKET + ARRIVAL_EVENT_VIP_PERQUISIION + SERVERS_VIP_PERQUISITION)) {
+                boolean isFromFirstQueue = (perquisitionPriorityClassService.get(e - (ALL_EVENTS_VIP_TICKET   + 1)) == 1);
+                if (isFromFirstQueue)
+                    classOneTotalPopulation--;
+                else
+                    classTwoTotalPopulation--;
 
-                if (firstCompletionPerquisition == 0)
-                    firstCompletionPerquisition = t.current;
+                    // perquisition service
+                if (perquisitionFirstCompletetion == 0)
+                    perquisitionFirstCompletetion = t.current;
+
+
 
                 boolean abandon = generateAbandon(r, streamIndex, P5);
+                indexPerquisition++;
                 if (abandon) {
                     double abandonTime = t.current + 0.01;
                     abandonsPerquisition.add(abandonTime);
-                } else {
-                    numberPerquisition--;
-                    indexPerquisition++;
-                    s = e;
-
-                    if (numberPerquisition >= SERVERS_VIP_PERQUISITION) {
-                        service = m.getService(r, V_P_SR);
-                        sum[s].service += service;
-                        sum[s].served++;
-                        event[s].t = t.current + service;
-                    } else {
-                        event[s].x = 0;
-                    }
                 }
+
+
+                s = e;
+                // Now, there is idle server, so re-generate service time for queued job
+                if (firstClassJobInQueue >= 1) {
+                    firstClassJobInQueue --;
+                    // GENERATE A SERVICE LESS THAN 10 SECONDS
+                    do {
+                        service = m.getService(r, 160, V_P_SR);
+                    } while (!(service < 10));
+                    perquisitionPriorityClassService.set(s - (ALL_EVENTS_VIP_TICKET + 1), 1);
+                    sum[s].service += service;
+                    sum[s].served++;
+                    event[s].t = t.current + service;
+                    event[s].x = 1;
+                } else if (secondClassJobInQueue >= 1) {
+                    secondClassJobInQueue --;
+                    // GENERATE A SERVICE GREATER THEN 10 SECONDS
+                    do {
+                        service = m.getService(r, 160, V_P_SR);
+                    } while ((service < 10));
+                    perquisitionPriorityClassService.set(s - (ALL_EVENTS_VIP_TICKET + 1), 2);
+                    sum[s].service += service;
+                    sum[s].served++;
+                    event[s].t = t.current + service;
+                    event[s].x = 1;
+                } else
+                    event[s].x = 0;
             }
 
+
             else if (e == ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION) {
+                // perquisition abandon
                 abandonPerquisition++;
                 abandonsPerquisition.remove(0);
             }
 
             else {
+                /* ticket check service */
                 if (firstCompletionTicketCheck == 0)
                     firstCompletionTicketCheck = t.current;
-                indexTicketCheck++;                                     /* departure from ticket check */
+                indexTicketCheck++;
                 numberTicketCheck--;
                 event[ALL_EVENTS_VIP_TICKET].t = t.current;
                 event[ALL_EVENTS_VIP_TICKET].x = 1;
 
                 s = e;
                 if (numberTicketCheck >= SERVERS_VIP_TICKET) {     // there are jobs in queue
-                    service = m.getService(r, V_TC_SR);
+                    service = m.getService(r, 3,V_TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     event[s].t = t.current + service;
@@ -262,7 +306,6 @@ class VIPMsq {
         double allServed = 0;
 
         for (s = 1; s <= SERVERS_VIP_TICKET; s++) {
-            // todo vedere se con t.current cambia o va meglio
             System.out.print("       " + (s) + "          " + g.format(sum[s].service / ticketCheckActualTime) + "            ");
             System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTicketCheck));
             allServices += sum[s].service;
@@ -274,7 +317,7 @@ class VIPMsq {
         System.out.println("");
 
         /*  the following line is relative to the single server case
-        double perquisitionActualTime = event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].t - firstCompletionPerquisition;    */
+        double perquisitionActualTime = event[ALL_EVENTS_VIP_TICKET + DEPARTURE_EVENT_VIP_PERQUISITION].t - perquisitionFirstCompletetion;    */
 
         double perquisitionFinalTime = 0;
         double perquisitionMean = 0;
@@ -284,7 +327,7 @@ class VIPMsq {
                 perquisitionFinalTime = event[s].t;
         }
 
-        double perquisitionActualTime = perquisitionFinalTime + firstCompletionPerquisition;
+        double perquisitionActualTime = perquisitionFinalTime + perquisitionFirstCompletetion;
 
         System.out.println("\nfor " + indexPerquisition + " jobs the VIP perquisition statistics are:\n");
         System.out.println("  avg interarrivals .. =   " + f.format(perquisitionActualTime  / indexPerquisition));
@@ -309,8 +352,6 @@ class VIPMsq {
 
         System.out.println("");
     }
-
-
     // this function generate a true value with (percentage * 100) % probability, oth. false
     static boolean generateAbandon(Rngs rngs, int streamIndex, double percentage) {
         rngs.selectStream(1 + streamIndex);
@@ -326,13 +367,6 @@ class VIPMsq {
         return (-m * Math.log(1.0 - r.random()));
     }
 
-    double uniform(double a, double b, Rngs r) {
-        /* --------------------------------------------
-         * generate a Uniform random variate, use a < b
-         * --------------------------------------------
-         */
-        return (a + (b - a) * r.random());
-    }
 
     double getArrival(Rngs r, double currentTime) {
         /* --------------------------------------------------------------
@@ -349,8 +383,8 @@ class VIPMsq {
     }
 
 
-    double getService(Rngs r, double serviceTime) {
-        r.selectStream(3);
+    double getService(Rngs r, int streamIndex, double serviceTime) {
+        r.selectStream(streamIndex);
         return (exponential(serviceTime, r));
     }
 
@@ -393,7 +427,7 @@ class VIPMsq {
         return (s);
     }
 
-    int findOnePerquisition(VIPMsqEvent[] event) {
+    int findPerquisition(VIPMsqEvent[] event) {
         /* -----------------------------------------------------
          * return the index of the available server idle longest
          * -----------------------------------------------------
@@ -412,6 +446,5 @@ class VIPMsq {
         }
         return (s);
     }
-
 
 }

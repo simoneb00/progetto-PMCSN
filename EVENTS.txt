@@ -20,3 +20,17 @@ EVENTS
 65 =  SKIP
 66 = ABBANDONO
 
+------------------------------------------
+
+VIP MODEL
+
+-TICKET CHECK-
+ 0: ARRIVO
+ 1-4: SERVIZIO
+ 5: ABBANDONO
+
+-PERQUISIZIONI-
+ 6: ARRIVO
+ 7-11: SERVIZIO
+ 12: ABBANDONO
+ */
