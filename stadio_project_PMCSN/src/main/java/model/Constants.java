@@ -20,7 +20,8 @@ public class Constants {
 
     // probability of abandon after vip perquisition
     public static final double P5 = 0.02;
-
+    // probability of abandon after vip single queue
+    public static final double P6 = 0.002; //First probability combined with second probability
 
 
     // ---- TIME SLOT PERCENTAGE ----
@@ -47,10 +48,12 @@ public class Constants {
     public static final double T_SR = 5;
 
     // VIP ticket check
-    public static final double V_TC_SR = 20;
+    public static final double V_TC_SR = 7;
 
     // VIP perquisition
-    public static final double V_P_SR = 40;
+    public static final double V_P_SR = 20;
 
+    // VIP single queue service time
+    public static final double VIP_MEAN_SERVICE_TIME = 27;
 
 }
