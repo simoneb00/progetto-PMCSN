@@ -273,7 +273,6 @@ import static model.Events.*;
 
         System.out.println("  avg service time: " + g.format(allServices / allServed));
 
-        System.out.println("");
 
         System.out.println("");
     }

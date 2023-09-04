@@ -15,6 +15,12 @@ public class Constants {
     // probability of abandon after second perquisition
     public static final double P3 = 0.02;
 
+    // probability of being subscribed ( abbonato )
+    public static final double P7 = 0.1;
+
+    // probability of abandon after subscribed perquisition
+    public static final double P8 = 0.02;
+
     // probability of abandon after vip ticket check
     public static final double P4 = 0.1;
 
