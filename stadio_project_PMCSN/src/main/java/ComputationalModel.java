@@ -149,7 +149,7 @@ class Msq {
         t.current = START;
 
         /* generating the first arrival */
-        events[0].t = m.getArrival(r, t.current);
+        events[0].t = m.getArrival(r, 17,t.current);
         events[0].x = 1;
 
         /* all other servers are initially idle */
@@ -220,13 +220,13 @@ class Msq {
                 numberTicketCheck++;
 
                 /* generate the next arrival */
-                events[ARRIVAL_EVENT_TICKET - 1].t = m.getArrival(r, t.current);
+                events[ARRIVAL_EVENT_TICKET - 1].t = m.getArrival(r, 34,t.current);
                 if (events[ARRIVAL_EVENT_TICKET - 1].t > STOP)
                     events[ARRIVAL_EVENT_TICKET - 1].x = 0;
 
                 /* if there's no queue, put a job on service */
                 if (numberTicketCheck <= SERVERS_TICKET) {
-                    service = m.getService(r, 0, TC_SR);
+                    service = m.getService(r, 51, TC_SR);
                     s = m.findOneTicketCheck(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -243,7 +243,7 @@ class Msq {
                 events[ALL_EVENTS_TICKET].x = 0;
 
                 /* generate an abandon with probability P1 */
-                boolean abandon = generateAbandon(r, streamIndex, P1);
+                boolean abandon = generateAbandon(r, 68, P1);
 
                 if (abandon) {
                     /* an abandon must be generated -> we must add it to the abandons list and schedule it */
@@ -255,7 +255,7 @@ class Msq {
 
                     numberFirstPerquisition++;
                     if (numberFirstPerquisition <= SERVERS_FIRST_PERQUISITION) {
-                        service = m.getService(r, 32, P_SR);
+                        service = m.getService(r, 85, P_SR);
                         s = m.findOneFirstPerquisition(events);
                         sum[s].service += service;
                         sum[s].served++;
@@ -266,7 +266,7 @@ class Msq {
             } else if ((e > ALL_EVENTS_TICKET) && (e <= ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION)) {  /* service on one of the first perquisition servers */
 
                 /* skip first perquisition with probability x %, depending on the number of people in queue */
-                boolean skip = generateSkip(r, streamIndex, numberFirstPerquisition - SERVERS_FIRST_PERQUISITION);
+                boolean skip = generateSkip(r, 102, numberFirstPerquisition - SERVERS_FIRST_PERQUISITION);
 
 
                 if (skip) {
@@ -283,7 +283,7 @@ class Msq {
                     numberFirstPerquisition--;
 
                     /* generate an abandon with probability P2 */
-                    boolean abandon = generateAbandon(r, streamIndex, P2);
+                    boolean abandon = generateAbandon(r, 119, P2);
                     if (abandon) {
 
                         /* an abandon must be generated -> we must add it to the abandons list and schedule it */
@@ -300,7 +300,7 @@ class Msq {
                 /* if there's queue, put a job on service on this server */
                 s = e;
                 if (numberFirstPerquisition >= SERVERS_FIRST_PERQUISITION) {
-                    service = m.getService(r, 32, P_SR);
+                    service = m.getService(r, 136, P_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -331,7 +331,7 @@ class Msq {
 
                 numberTurnstiles++;
                 if (numberTurnstiles <= SERVERS_TURNSTILES) {
-                    service = m.getService(r, 96, T_SR);
+                    service = m.getService(r, 153, T_SR);
                     s = m.findOneTurnstiles(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -357,7 +357,7 @@ class Msq {
                 s = e;
                 if (numberTurnstiles >= SERVERS_TURNSTILES) {
                     /* there's a job in queue to be processed */
-                    service = m.getService(r, 96, T_SR);
+                    service = m.getService(r, 170, T_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -374,7 +374,7 @@ class Msq {
                 numberSecondPerquisition++;
                 if (numberSecondPerquisition <= SERVERS_SECOND_PERQUISITION) {
                     /* no queue -> the job can be processed immediately */
-                    service = m.getService(r, 160, P_SR);
+                    service = m.getService(r, 187, P_SR);
                     s = m.findOneSecondPerquisition(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -386,7 +386,7 @@ class Msq {
                     && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION + SERVERS_SECOND_PERQUISITION)
             ) {
 
-                boolean skip = generateSkip(r, streamIndex, numberSecondPerquisition - SERVERS_SECOND_PERQUISITION);
+                boolean skip = generateSkip(r, 204, numberSecondPerquisition - SERVERS_SECOND_PERQUISITION);
                 if (skip) {
 
                     double skipTime = t.current + 0.01;
@@ -401,7 +401,7 @@ class Msq {
                     numberSecondPerquisition--;
 
                     /* abandons are generated only if the perquisition has not been skipped */
-                    boolean abandon = generateAbandon(r, streamIndex, P3);
+                    boolean abandon = generateAbandon(r, 221, P3);
                     if (abandon) {
                         double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
                         abandonsSecondPerquisition.add(abandonTime);
@@ -410,7 +410,7 @@ class Msq {
 
                 s = e;
                 if (numberSecondPerquisition >= SERVERS_SECOND_PERQUISITION) {
-                    service = m.getService(r, 160, P_SR);
+                    service = m.getService(r, 238, P_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -444,7 +444,7 @@ class Msq {
                 /* if there's queue, put a job in queue on service on this server */
                 s = e;
                 if (numberTicketCheck >= SERVERS_TICKET) {
-                    service = m.getService(r, 0, TC_SR);
+                    service = m.getService(r, 255, TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -637,10 +637,6 @@ class Msq {
 
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
-
-        if (queueSize > 656)
-            System.out.println("");
-
         rngs.selectStream(64);
         double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
@@ -745,12 +741,12 @@ class Msq {
         return (-m * Math.log(1.0 - r.random()));
     }
 
-    double getArrival(Rngs r, double currentTime) {
+    double getArrival(Rngs r, int streamIndex, double currentTime) {
         /* --------------------------------------------------------------
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(192);
+        r.selectStream(1 + streamIndex);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
 
@@ -760,7 +756,7 @@ class Msq {
     }
 
     double getService(Rngs r, int streamIndex, double serviceTime) {
-        r.selectStream(streamIndex);
+        r.selectStream(1 + streamIndex);
         return (exponential(serviceTime, r));
     }
 

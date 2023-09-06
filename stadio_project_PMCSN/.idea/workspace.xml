@@ -5,9 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4ec9b1bc-c840-422b-8759-3f033ee936f8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ComputationalModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ComputationalModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/ImprovedComputationalModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ImprovedComputationalModel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/ImprovedVIPComputationalModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ImprovedVIPComputationalModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/Constants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/Constants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/Events.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/Events.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,7 +45,14 @@
       <recent name="" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ImprovedVIPComputationalModel">
+  <component name="RunManager" selected="Application.ImprovedComputationalModel">
+    <configuration name="ImprovedComputationalModel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="ImprovedComputationalModel" />
+      <module name="stadio_project_PMCSN" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="ImprovedVIPComputationalModel" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="ImprovedVIPComputationalModel" />
       <module name="stadio_project_PMCSN" />
@@ -59,8 +67,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Msq" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Msq" />
+      <module name="stadio_project_PMCSN" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.ImprovedComputationalModel" />
+        <item itemvalue="Application.Msq" />
         <item itemvalue="Application.ImprovedVIPComputationalModel" />
         <item itemvalue="Application.ImprovementModel" />
       </list>
@@ -85,15 +102,6 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/ImprovedVIPComputationalModel.java</url>
-          <line>92</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <watches-manager>
       <configuration name="Application">
         <watch expression="events[6]" />

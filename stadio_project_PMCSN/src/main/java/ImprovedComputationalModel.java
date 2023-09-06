@@ -142,7 +142,7 @@ class ImprovedComputationalModel {
         t.current = START;
 
         /* generating the first arrival */
-        events[0].t = m.getArrival(r, t.current);
+        events[0].t = m.getArrival(r, 11 ,t.current);
         events[0].x = 1;
 
         /* all other servers are initially idle */
@@ -210,13 +210,13 @@ class ImprovedComputationalModel {
                 numberTicketCheck++;
 
                 /* generate the next arrival */
-                events[ARRIVAL_EVENT_TICKET - 1].t = m.getArrival(r, t.current);
+                events[ARRIVAL_EVENT_TICKET - 1].t = m.getArrival(r, 22, t.current);
                 if (events[ARRIVAL_EVENT_TICKET - 1].t > STOP)
                     events[ARRIVAL_EVENT_TICKET - 1].x = 0;
 
                 /* if there's no queue, put a job on service */
                 if (numberTicketCheck <= SERVERS_TICKET) {
-                    service = m.getService(r, 0, TC_SR);
+                    service = m.getService(r, 33, TC_SR);
                     s = m.findOneTicketCheck(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -236,7 +236,7 @@ class ImprovedComputationalModel {
                 events[ALL_EVENTS_TICKET].x = 0;
 
                 /* generate an abandon with probability P1 */
-                boolean abandon = generateAbandon(r, streamIndex, P1);
+                boolean abandon = generateAbandon(r, 44, P1);
 
                 if (abandon) {
                     /* an abandon must be generated -> we must add it to the abandons list and schedule it */
@@ -247,7 +247,7 @@ class ImprovedComputationalModel {
                     /* no abandon -> generate arrival at turnstiles */
                     numberTurnstiles++;
                     if (numberTurnstiles <= SERVERS_TURNSTILES) {
-                        service = m.getService(r, 96, T_SR);
+                        service = m.getService(r, 55, T_SR);
                         s = m.findOneTurnstiles(events);
                         sum[s].service += service;
                         sum[s].served++;
@@ -272,7 +272,7 @@ class ImprovedComputationalModel {
                 s = e;
                 if (numberTurnstiles >= SERVERS_TURNSTILES) {
                     /* there's a job in queue to be processed */
-                    service = m.getService(r, 96, T_SR);
+                    service = m.getService(r, 66, T_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -285,7 +285,7 @@ class ImprovedComputationalModel {
 
                 events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES].x = 0;
 
-                service = m.getService(r, 160, P_SR);
+                service = m.getService(r, 77, P_SR);
                 if (service < 10) {
                     /* first queue */
                     classOneTotalPopulation++;
@@ -340,10 +340,10 @@ class ImprovedComputationalModel {
                 boolean skip = false;
 
                 if (isFromFirstQueue) {
-                    skip = generateSkip(r, streamIndex, classOneTotalPopulation - SERVERS_PERQUISITION);
+                    skip = generateSkip(r, 88, classOneTotalPopulation - SERVERS_PERQUISITION);
                 }
                 else if (isFromSecondQueue){
-                    skip = generateSkip(r, streamIndex, classTwoTotalPopulation - SERVERS_PERQUISITION);
+                    skip = generateSkip(r, 99, classTwoTotalPopulation - SERVERS_PERQUISITION);
                 }
                 else{
                     throw new Exception("Unexpected behaviour");
@@ -370,7 +370,7 @@ class ImprovedComputationalModel {
                     indexPerquisition++;
 
                     /* abandons are generated only if the perquisition has not been skipped */
-                    boolean abandon = generateAbandon(r, streamIndex, P3);
+                    boolean abandon = generateAbandon(r, 110, P3);
                     if (abandon) {
                         double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
                         perquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 0);
@@ -385,7 +385,7 @@ class ImprovedComputationalModel {
                     firstClassJobInQueue --;
                     // GENERATE A SERVICE LESS THAN 10 SECONDS
                     do {
-                        service = m.getService(r, 160, P_SR);
+                        service = m.getService(r, 121, P_SR);
                     } while (!(service < 10));
                     perquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 1);
                     sum[s].service += service;
@@ -396,7 +396,7 @@ class ImprovedComputationalModel {
                     secondClassJobInQueue --;
                     // GENERATE A SERVICE GREATER THEN 10 SECONDS
                     do {
-                        service = m.getService(r, 160, P_SR);
+                        service = m.getService(r, 132, P_SR);
                     } while ((service < 10));
                     perquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 2);
                     sum[s].service += service;
@@ -423,7 +423,7 @@ class ImprovedComputationalModel {
                 events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION].x = 0;
 
                 /* generate an abandon with probability P1 */
-                boolean abandon = generateAbandon(r, streamIndex, P1);
+                boolean abandon = generateAbandon(r, 143, P1);
 
                 if (abandon) {
                     /* an abandon must be generated -> we must add it to the abandons list and schedule it */
@@ -434,7 +434,7 @@ class ImprovedComputationalModel {
                     /* no abandon -> generate arrival at turnstiles */
                     numberSubscribedTurnstiles++;
                     if (numberSubscribedTurnstiles <= SERVERS_SUBSCRIBED_TURNSTILES) {
-                        service = m.getService(r, 96, T_SR);
+                        service = m.getService(r, 154, T_SR);
                         s = m.findOneSubscribedTurnstiles(events);
                         sum[s].service += service;
                         sum[s].served++;
@@ -460,7 +460,7 @@ class ImprovedComputationalModel {
                 s = e;
                 if (numberSubscribedTurnstiles >= SERVERS_SUBSCRIBED_TURNSTILES) {
                     /* there's a job in queue to be processed */
-                    service = m.getService(r, 96, T_SR);
+                    service = m.getService(r, 165, T_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -473,7 +473,7 @@ class ImprovedComputationalModel {
                 events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES].x = 0;
                 numberSubscribedPerquisition++;
                 if (numberSubscribedPerquisition <= SERVERS_SUBSCRIBED_PERQUISITION) {
-                    service = m.getService(r, 96, P_SR);
+                    service = m.getService(r, 176, P_SR);
                     s = m.findOneSubscribedPerquisition(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -489,7 +489,7 @@ class ImprovedComputationalModel {
                 indexSubscribedPerquisition++;
                 numberSubscribedPerquisition--;
                 /* abandons are generated only if the perquisition has not been skipped */
-                boolean abandon = generateAbandon(r, streamIndex, P3);
+                boolean abandon = generateAbandon(r, 187, P3);
                 if (abandon) {
                     double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
                     abandonsSubscribedPerquisition.add(abandonTime);
@@ -497,7 +497,7 @@ class ImprovedComputationalModel {
                 /* if there's queue, put a job in queue on service on this server */
                 s = e;
                 if (numberSubscribedPerquisition >= SERVERS_SUBSCRIBED_PERQUISITION) {
-                    service = m.getService(r, 0, P_SR);
+                    service = m.getService(r, 198, P_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -518,7 +518,7 @@ class ImprovedComputationalModel {
                 numberTicketCheck--;
 
                 /*Check if is subscribed*/
-                if(isSubscribed(r, 0, P7)) {
+                if(isSubscribed(r, 209, P7)) {
                     // generate arrival to dedicated queue
                     events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION].t= t.current;
                     events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION].x= 1;
@@ -531,7 +531,7 @@ class ImprovedComputationalModel {
                 /* if there's queue, put a job in queue on service on this server */
                 s = e;
                 if (numberTicketCheck >= SERVERS_TICKET) {
-                    service = m.getService(r, 0, TC_SR);
+                    service = m.getService(r, 220, TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -889,12 +889,12 @@ class ImprovedComputationalModel {
         return (-m * Math.log(1.0 - r.random()));
     }
 
-    double getArrival(Rngs r, double currentTime) {
+    double getArrival(Rngs r, int streamIndex, double currentTime) {
         /* --------------------------------------------------------------
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(192);
+        r.selectStream(1 + streamIndex);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
 
@@ -904,7 +904,7 @@ class ImprovedComputationalModel {
     }
 
     double getService(Rngs r, int streamIndex, double serviceTime) {
-        r.selectStream(streamIndex);
+        r.selectStream(1 + streamIndex);
         return (exponential(serviceTime, r));
     }
 

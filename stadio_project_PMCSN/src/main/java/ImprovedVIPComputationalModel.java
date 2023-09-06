@@ -78,7 +78,7 @@ import static model.Events.*;
         VIPMsqT t = new VIPMsqT();
         t.current = START;
 
-        event[0].t = m.getArrival(r, t.current);
+        event[0].t = m.getArrival(r, 24,t.current);
         event[0].x = 1;
 
         for (s = 1; s < IMPROVED_VIP_SERVERS; s++) {
@@ -105,32 +105,22 @@ import static model.Events.*;
 
             if (e == IMPROVED_VIP_ARRIVAL_EVENT - 1) {
                 /* vip arrival */
-                event[0].t = m.getArrival(r, t.current);
+                event[0].t = m.getArrival(r, 48,t.current);
 
                 if (event[0].t > STOP)
                     event[0].x = 0;
-
-//                if (numberTicketCheck <= IMPROVED_VIP_SERVERS) {
-//                    service = m.getService(r, 0, V_TC_SR);
-//                    s = m.findOneTicketCheck(event);
-//                    sum[s].service += service;
-//                    sum[s].served++;
-//                    event[s].t = t.current + service;
-//                    event[s].x = 1;
-//                }
-//            }else if(true){
 
                 event[ALL_EVENTS_VIP_IMPROVED - 1].x = 0;
 
                 // generate, with probability P4, an abandon
                 // (after eventually failed ticket check)
-                boolean isAbandon = generateAbandon(r, streamIndex, P6);
+                boolean isAbandon = generateAbandon(r, 72, P6);
                 if (isAbandon) {  // add an abandon
                     double abandonTime = t.current + 0.01;  // this will be the next abandon time (it must be small in order to execute the abandon as next event)
                     abandon.add(abandonTime);
                 } else{
                     // if there isn't abandon process arrival
-                    service = m.getService(r, 4, VIP_MEAN_SERVICE_TIME);
+                    service = m.getService(r, 96, VIP_MEAN_SERVICE_TIME);
                     if (service < 10) {
                         /* first queue */
                         classOneTotalPopulation++;
@@ -194,7 +184,7 @@ import static model.Events.*;
 
 
 
-                boolean isAbandon = generateAbandon(r, streamIndex, P6);
+                boolean isAbandon = generateAbandon(r, 120, P6);
                 indexServer++;
                 if (isAbandon) {
                     double abandonTime = t.current + 0.01;
@@ -208,7 +198,7 @@ import static model.Events.*;
                     firstClassJobInQueue --;
                     // GENERATE A SERVICE LESS THAN 10 SECONDS
                     do {
-                        service = m.getService(r, 160, V_P_SR);
+                        service = m.getService(r, 144, V_P_SR);
                     } while (!(service < 10));
                     serverPriorityClassService.set(s - 1, 1);
                     sum[s].service += service;
@@ -219,7 +209,7 @@ import static model.Events.*;
                     secondClassJobInQueue --;
                     // GENERATE A SERVICE GREATER THEN 10 SECONDS
                     do {
-                        service = m.getService(r, 160, V_P_SR);
+                        service = m.getService(r, 168, V_P_SR);
                     } while ((service < 10));
                     serverPriorityClassService.set(s - 1, 2);
                     sum[s].service += service;
@@ -292,12 +282,12 @@ import static model.Events.*;
     }
 
 
-    double getArrival(Rngs r, double currentTime) {
+    double getArrival(Rngs r, int streamIndex, double currentTime) {
         /* --------------------------------------------------------------
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(0);
+        r.selectStream(1 + streamIndex);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
         // int index = 0;  // todo verification step (forcing the first timeslot)
@@ -308,7 +298,7 @@ import static model.Events.*;
 
 
     double getService(Rngs r, int streamIndex, double serviceTime) {
-        r.selectStream(streamIndex);
+        r.selectStream(1 + streamIndex);
         return (exponential(serviceTime, r));
     }
 
