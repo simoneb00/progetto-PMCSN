@@ -673,11 +673,6 @@ public class Batch {
 
         System.out.println("END OF ITERATION");
 
-        /* the code below prints the simulation's statistics, for every node */
-
-        DecimalFormat f = new DecimalFormat("###0.0000");
-        DecimalFormat g = new DecimalFormat("###0.000000");
-
 
         /* BATCH SIMULATION RESULTS */
 
@@ -894,7 +889,7 @@ public class Batch {
          */
         r.selectStream(192);
 
-        int index = 2;  /* forcing the first time slot, for the verification step */
+        int index = 0;  /* forcing the first time slot, for the verification step */
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 
