@@ -100,7 +100,7 @@ class BatchVIP {
         VIPMsqT t = new VIPMsqT();
         t.current = START;
 
-        events[0].t = m.getArrival(r, t.current);
+        events[0].t = m.getArrival(r, 25,t.current);
         events[0].x = 1;
 
         for (s = 1; s < ALL_EVENTS_VIP_TICKET + ALL_EVENTS_VIP_PERQUISITION; s++) {
@@ -234,12 +234,12 @@ class BatchVIP {
 
                 numberTicketCheck++;
 
-                events[0].t = m.getArrival(r, t.current);
+                events[0].t = m.getArrival(r, 50,t.current);
                 if (events[0].t > STOP)
                     events[0].x = 0;
 
                 if (numberTicketCheck <= SERVERS_VIP_TICKET) {
-                    service = m.getService(r, V_TC_SR);
+                    service = m.getService(r, 75,V_TC_SR);
                     s = m.findOneTicketCheck(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -258,7 +258,7 @@ class BatchVIP {
                 events[ALL_EVENTS_VIP_TICKET].x = 0;
 
                 // generate, with probability P6, an abandon
-                boolean abandon = generateAbandon(r, streamIndex, P4);
+                boolean abandon = generateAbandon(r, 100, P4);
                 if (abandon) {  // add an abandon
                     double abandonTime = t.current + 0.01;  // this will be the next abandon time (it must be small in order to execute the abandon as next event)
                     abandonsTicket.add(abandonTime);
@@ -268,7 +268,7 @@ class BatchVIP {
 
                     numberPerquisition++;
                     if (numberPerquisition <= SERVERS_VIP_PERQUISITION) {   // if false, there's queue
-                        service = m.getService(r, V_P_SR);
+                        service = m.getService(r, 125,V_P_SR);
                         s = m.findOnePerquisition(events);
                         sum[s].service += service;
                         sum[s].served++;
@@ -284,7 +284,7 @@ class BatchVIP {
                 if (firstCompletionPerquisition == 0)
                     firstCompletionPerquisition = t.current;
 
-                boolean abandon = generateAbandon(r, streamIndex, P5);
+                boolean abandon = generateAbandon(r, 150, P5);
                 if (abandon) {
                     double abandonTime = t.current + 0.01;
                     abandonsPerquisition.add(abandonTime);
@@ -294,7 +294,7 @@ class BatchVIP {
                     s = e;
 
                     if (numberPerquisition >= SERVERS_VIP_PERQUISITION) {
-                        service = m.getService(r, V_P_SR);
+                        service = m.getService(r, 175,V_P_SR);
                         sum[s].service += service;
                         sum[s].served++;
                         events[s].t = t.current + service;
@@ -319,7 +319,7 @@ class BatchVIP {
 
                 s = e;
                 if (numberTicketCheck >= SERVERS_VIP_TICKET) {     // there are jobs in queue
-                    service = m.getService(r, V_TC_SR);
+                    service = m.getService(r, 200,V_TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -335,7 +335,7 @@ class BatchVIP {
 
         System.out.println("Completed " + batchCounter + " batches");
 
-        System.out.println("");
+        System.out.println();
 
 
         /* files creation for interval estimation */
@@ -395,12 +395,12 @@ class BatchVIP {
         return (a + (b - a) * r.random());
     }
 
-    double getArrival(Rngs r, double currentTime) {
+    double getArrival(Rngs r, int streamIndex, double currentTime) {
         /* --------------------------------------------------------------
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(0);
+        r.selectStream(1 + streamIndex);
 
         int index = 1;  // forcing the first timeslot
 
@@ -409,8 +409,8 @@ class BatchVIP {
     }
 
 
-    double getService(Rngs r, double serviceTime) {
-        r.selectStream(3);
+    double getService(Rngs r, int streamIndex, double serviceTime) {
+        r.selectStream(1 + streamIndex);
         return (exponential(serviceTime, r));
     }
 

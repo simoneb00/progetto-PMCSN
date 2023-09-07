@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4ec9b1bc-c840-422b-8759-3f033ee936f8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ComputationalModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ComputationalModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ImprovedComputationalModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ImprovedComputationalModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ImprovedVIPComputationalModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ImprovedVIPComputationalModel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/batch/Batch.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/batch/Batch.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/batch/BatchVIP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/batch/BatchVIP.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

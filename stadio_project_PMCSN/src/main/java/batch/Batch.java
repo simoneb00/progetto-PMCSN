@@ -7,7 +7,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,10 +50,6 @@ public class Batch {
     static List<TimeSlot> slotList = new ArrayList<>();
 
     public static void main(String[] args) {
-
-        /* stream index for the rng */
-        int streamIndex = 1;
-
         /* population counter for every node */
         long numberTicketCheck = 0;
         long numberFirstPerquisition = 0;
@@ -190,7 +185,7 @@ public class Batch {
         t.current = START;
 
         /* generating the first arrival */
-        events[0].t = m.getArrival(r, t.current);
+        events[0].t = m.getArrival(r,250 ,t.current);
         events[0].x = 1;
 
         /* all other servers are initially idle */
@@ -436,13 +431,13 @@ public class Batch {
                 numberTicketCheck++;
 
                 /* generate the next arrival */
-                events[ARRIVAL_EVENT_TICKET - 1].t = m.getArrival(r, t.current);
+                events[ARRIVAL_EVENT_TICKET - 1].t = m.getArrival(r, 30 ,t.current);
                 if (events[ARRIVAL_EVENT_TICKET - 1].t > STOP)
                     events[ARRIVAL_EVENT_TICKET - 1].x = 0;
 
                 /* if there's no queue, put a job on service */
                 if (numberTicketCheck <= SERVERS_TICKET) {
-                    service = m.getService(r, 0, TC_SR);
+                    service = m.getService(r, 45, TC_SR);
                     s = m.findOneTicketCheck(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -459,7 +454,7 @@ public class Batch {
                 events[ALL_EVENTS_TICKET].x = 0;
 
                 /* generate an abandon with probability P1 */
-                boolean abandon = generateAbandon(r, streamIndex, P1);
+                boolean abandon = generateAbandon(r, 60, P1);
 
                 if (abandon) {
                     /* an abandon must be generated -> we must add it to the abandons list and schedule it */
@@ -471,7 +466,7 @@ public class Batch {
 
                     numberFirstPerquisition++;
                     if (numberFirstPerquisition <= SERVERS_FIRST_PERQUISITION) {
-                        service = m.getService(r, 32, P_SR);
+                        service = m.getService(r, 75, P_SR);
                         s = m.findOneFirstPerquisition(events);
                         sum[s].service += service;
                         sum[s].served++;
@@ -482,7 +477,7 @@ public class Batch {
             } else if ((e > ALL_EVENTS_TICKET) && (e <= ALL_EVENTS_TICKET + SERVERS_FIRST_PERQUISITION)) {  /* service on one of the first perquisition servers */
 
                 /* skip first perquisition with probability x %, depending on the number of people in queue */
-                boolean skip = generateSkip(r, streamIndex, numberFirstPerquisition - SERVERS_FIRST_PERQUISITION);
+                boolean skip = generateSkip(r, 90, numberFirstPerquisition - SERVERS_FIRST_PERQUISITION);
 
                 if (skip) {
 
@@ -498,7 +493,7 @@ public class Batch {
                     numberFirstPerquisition--;
 
                     /* generate an abandon with probability P2 */
-                    boolean abandon = generateAbandon(r, streamIndex, P2);
+                    boolean abandon = generateAbandon(r, 105, P2);
                     if (abandon) {
 
                         /* an abandon must be generated -> we must add it to the abandons list and schedule it */
@@ -515,7 +510,7 @@ public class Batch {
                 /* if there's queue, put a job on service on this server */
                 s = e;
                 if (numberFirstPerquisition >= SERVERS_FIRST_PERQUISITION) {
-                    service = m.getService(r, 32, P_SR);
+                    service = m.getService(r, 120, P_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -546,7 +541,7 @@ public class Batch {
 
                 numberTurnstiles++;
                 if (numberTurnstiles <= SERVERS_TURNSTILES) {
-                    service = m.getService(r, 96, T_SR);
+                    service = m.getService(r, 135, T_SR);
                     s = m.findOneTurnstiles(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -572,7 +567,7 @@ public class Batch {
                 s = e;
                 if (numberTurnstiles >= SERVERS_TURNSTILES) {
                     /* there's a job in queue to be processed */
-                    service = m.getService(r, 96, T_SR);
+                    service = m.getService(r, 150, T_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -589,7 +584,7 @@ public class Batch {
                 numberSecondPerquisition++;
                 if (numberSecondPerquisition <= SERVERS_SECOND_PERQUISITION) {
                     /* no queue -> the job can be processed immediately */
-                    service = m.getService(r, 160, P_SR);
+                    service = m.getService(r, 165, P_SR);
                     s = m.findOneSecondPerquisition(events);
                     sum[s].service += service;
                     sum[s].served++;
@@ -601,7 +596,7 @@ public class Batch {
                     && (e < ALL_EVENTS_TICKET + ALL_EVENTS_FIRST_PERQUISITION + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_SECOND_PERQUISIION + SERVERS_SECOND_PERQUISITION)
             ) {
 
-                boolean skip = generateSkip(r, streamIndex, numberSecondPerquisition - SERVERS_SECOND_PERQUISITION);
+                boolean skip = generateSkip(r, 180, numberSecondPerquisition - SERVERS_SECOND_PERQUISITION);
                 if (skip) {
 
                     double skipTime = t.current + 0.01;
@@ -616,7 +611,7 @@ public class Batch {
                     numberSecondPerquisition--;
 
                     /* abandons are generated only if the perquisition has not been skipped */
-                    boolean abandon = generateAbandon(r, streamIndex, P3);
+                    boolean abandon = generateAbandon(r, 195, P3);
                     if (abandon) {
                         double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
                         abandonsSecondPerquisition.add(abandonTime);
@@ -625,7 +620,7 @@ public class Batch {
 
                 s = e;
                 if (numberSecondPerquisition >= SERVERS_SECOND_PERQUISITION) {
-                    service = m.getService(r, 160, P_SR);
+                    service = m.getService(r, 210, P_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -659,7 +654,7 @@ public class Batch {
                 /* if there's queue, put a job in queue on service on this server */
                 s = e;
                 if (numberTicketCheck >= SERVERS_TICKET) {
-                    service = m.getService(r, 0, TC_SR);
+                    service = m.getService(r, 225, TC_SR);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
@@ -678,7 +673,7 @@ public class Batch {
 
         System.out.println("Completed " + batchCounter + " batches");
 
-        System.out.println("");
+        System.out.println();
         
 
         /* files creation for interval estimation */
@@ -882,12 +877,12 @@ public class Batch {
         return (-m * Math.log(1.0 - r.random()));
     }
 
-    double getArrival(Rngs r, double currentTime) {
+    double getArrival(Rngs r, int streamIndex, double currentTime) {
         /* --------------------------------------------------------------
          * generate the next arrival time, exponential with rate given by the current time slot
          * --------------------------------------------------------------
          */
-        r.selectStream(192);
+        r.selectStream(1 + streamIndex);
 
         int index = 0;  /* forcing the first time slot, for the verification step */
 
@@ -897,7 +892,7 @@ public class Batch {
     }
 
     double getService(Rngs r, int streamIndex, double serviceTime) {
-        r.selectStream(streamIndex);
+        r.selectStream(1 + streamIndex);
         return (exponential(serviceTime, r));
     }
 
