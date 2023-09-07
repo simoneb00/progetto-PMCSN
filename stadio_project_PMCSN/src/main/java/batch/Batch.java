@@ -884,7 +884,7 @@ public class Batch {
          */
         r.selectStream(1 + streamIndex);
 
-        int index = 0;  /* forcing the first time slot, for the verification step */
+        int index = 1;  /* forcing the first time slot, for the verification step */
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
 

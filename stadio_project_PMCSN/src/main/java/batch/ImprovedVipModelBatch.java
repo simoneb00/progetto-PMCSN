@@ -10,6 +10,9 @@ import java.util.List;
 import static batch.Batch.writeFile;
 import static model.Constants.*;
 import static model.Events.*;
+import static model.Events.SERVERS_VIP_PERQUISITION;
+import static model.ImprovedEvents.*;
+import static model.ImprovedEvents.SERVERS_VIP_TICKET;
 
 
 //  TODO  UPDATE THIS WHEN EVENTS CHANGE
@@ -25,10 +28,10 @@ import static model.Events.*;
  12: ABBANDONO
  */
 
-class ImprovedVIPModelBatch {
+class ImprovedVipModelBatch {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 3 * 3600;        /* terminal (close the door) time */
+    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -70,7 +73,7 @@ class ImprovedVIPModelBatch {
         List<Double> abandon = new ArrayList<>();
         double serverFirstCompletetion = 0;
 
-        ImprovedVIPModelBatch m = new ImprovedVIPModelBatch();
+        ImprovedVipModelBatch m = new ImprovedVipModelBatch();
         List<Integer> serverPriorityClassService = new ArrayList<>();
 
         for (int i = 0; i < IMPROVED_VIP_SERVERS; i++) {
@@ -98,7 +101,7 @@ class ImprovedVIPModelBatch {
         VIPMsqT t = new VIPMsqT();
         t.current = START;
 
-        event[0].t = m.getArrival(r, 24,t.current);
+        event[0].t = m.getArrival(r, 24, t.current);
         event[0].x = 1;
 
         for (s = 1; s < IMPROVED_VIP_SERVERS; s++) {
@@ -120,7 +123,7 @@ class ImprovedVIPModelBatch {
                 double actualTime = t.current - currentBatchStartingTime;
 
                 populations.add(areaServer / actualTime);
-                abandons.add((double)abandonCheck / b);
+                abandons.add((double) abandonCheck / b);
 
                 for (s = 1; s <= IMPROVED_VIP_SERVERS; s++)          /* adjust area to calculate */
                     areaServer -= sum[s].service;              /* averages for the queue   */
@@ -140,10 +143,22 @@ class ImprovedVIPModelBatch {
                 utilizations.add(sumUtilizations / IMPROVED_VIP_SERVERS);
                 serviceTimes.add(allServices / allServed);
 
+                areaServer = 0;
+                areaServerWait = 0;
+                indexServer = 0;
+
+                for (s = 1; s <= IMPROVED_VIP_SERVERS; s++) {
+                    sum[s].service = 0;
+                    sum[s].served = 0;
+                }
+
                 /* final updates */
                 currentBatchStartingTime = t.current;
                 currentFirstArrivalTime = event[IMPROVED_VIP_ARRIVAL_EVENT - 1].t;
             }
+
+            if (batchCounter == k)
+                break;
 
             if (!abandon.isEmpty()) {
                 event[IMPROVED_VIP_SERVERS + IMPROVED_VIP_ABANDON_EVENT].t = abandon.get(0);
@@ -160,154 +175,150 @@ class ImprovedVIPModelBatch {
 
             if (e == IMPROVED_VIP_ARRIVAL_EVENT - 1) {
                 /* vip arrival */
-                event[0].t = m.getArrival(r, 48,t.current);
 
+                event[0].t = m.getArrival(r, 48, t.current);    // generate next arrival
                 if (event[0].t > STOP)
                     event[0].x = 0;
 
-                event[ALL_EVENTS_VIP_IMPROVED - 1].x = 0;
+                service = m.getService(r, 96, VIP_MEAN_SERVICE_TIME);
+                if (service < 10) {
+                    /* first queue */
+                    classOneTotalPopulation++;
+                } else {
+                    /* second queue */
+                    classTwoTotalPopulation++;
+                }
+                if (classOneTotalPopulation + classTwoTotalPopulation <= IMPROVED_VIP_SERVERS) {
+                    /* the total node population is below the total number of servers */
+                    s = m.findServer(event);
 
-                // generate, with probability P4, an abandon
-                // (after eventually failed ticket check)
-                boolean isAbandon = generateAbandon(r, 72, P6);
-                if (isAbandon) {  // add an abandon
-                    double abandonTime = t.current + 0.01;  // this will be the next abandon time (it must be small in order to execute the abandon as next event)
-                    abandon.add(abandonTime);
-                } else{
-                    // if there isn't abandon process arrival
-                    service = m.getService(r, 96, VIP_MEAN_SERVICE_TIME);
+                    /* mark s as service for the first/second queue */
+                    // bind server index with job type into the array
                     if (service < 10) {
-                        /* first queue */
-                        classOneTotalPopulation++;
+                        try {
+                            // small job ( without bags)
+                            serverPriorityClassService.set(s - 1, 1);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
                     } else {
-                        /* second queue */
-                        classTwoTotalPopulation++;
-                    }
-                    if (classOneTotalPopulation + classTwoTotalPopulation <= IMPROVED_VIP_SERVERS) {
-                        /* the total node population is below the total number of servers */
-                        s = m.findServer(event);
-
-                        /* mark s as service for the first/second queue */
-                        // bind server index with job type into the array
-                        if (service < 10) {
-                            try {
-                                // small job ( without bags)
-                                serverPriorityClassService.set(s - 1, 1);
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
+                        try {
+                            // big job
+                            serverPriorityClassService.set(s - 1, 2);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
                         }
-                        else {
-                            try {
-                                // big job
-                                serverPriorityClassService.set(s - 1, 2);
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-
-                        sum[s].service += service;
-                        sum[s].served++;
-                        event[s].t = t.current + service;
-                        event[s].x = 1;
-                    }else{
-                        //UPDATE THE NUMBER OF JOBS IN QUEUE
-                        indexServerWait++;
-
-                        if (service<10)
-                            firstClassJobInQueue ++;
-                        else secondClassJobInQueue++;
                     }
 
-
-                }
-            }else if (e == IMPROVED_VIP_SERVERS + IMPROVED_VIP_ABANDON_EVENT) {
-                // ticket check abandon
-                abandonCheck++;
-                abandon.remove(0);
-            }
-            else if ( (e >= IMPROVED_VIP_ARRIVAL_EVENT) && (e <= IMPROVED_VIP_SERVERS) ) {
-                boolean isFromFirstQueue = (serverPriorityClassService.get(e - 1) == 1);
-                if (isFromFirstQueue)
-                    classOneTotalPopulation--;
-                else
-                    classTwoTotalPopulation--;
-
-                // perquisition service
-                if (serverFirstCompletetion == 0)
-                    serverFirstCompletetion = t.current;
-
-
-
-                boolean isAbandon = generateAbandon(r, 120, P6);
-                indexServer++;
-                if (isAbandon) {
-                    double abandonTime = t.current + 0.01;
-                    abandon.add(abandonTime);
-                }
-
-
-                s = e;
-                // Now, there is idle server, so re-generate service time for queued job
-                if (firstClassJobInQueue >= 1) {
-                    firstClassJobInQueue --;
-                    // GENERATE A SERVICE LESS THAN 10 SECONDS
-                    do {
-                        service = m.getService(r, 144, V_P_SR);
-                    } while (!(service < 10));
-                    serverPriorityClassService.set(s - 1, 1);
                     sum[s].service += service;
                     sum[s].served++;
                     event[s].t = t.current + service;
                     event[s].x = 1;
-                } else if (secondClassJobInQueue >= 1) {
-                    secondClassJobInQueue --;
-                    // GENERATE A SERVICE GREATER THEN 10 SECONDS
-                    do {
-                        service = m.getService(r, 168, V_P_SR);
-                    } while ((service < 10));
-                    serverPriorityClassService.set(s - 1, 2);
-                    sum[s].service += service;
-                    sum[s].served++;
-                    event[s].t = t.current + service;
-                    event[s].x = 1;
-                } else
-                    event[s].x = 0;
-            }else{
-                throw new Exception("Unexpected behaviour!");
+                } else {
+                    //UPDATE THE NUMBER OF JOBS IN QUEUE
+                    indexServerWait++;
+
+                    if (service < 10)
+                        firstClassJobInQueue++;
+                    else secondClassJobInQueue++;
+                }
+
+        } else if (e == IMPROVED_VIP_SERVERS + IMPROVED_VIP_ABANDON_EVENT) {
+            // ticket check abandon
+            abandonCheck++;
+            abandon.remove(0);
+        } else if ((e >= IMPROVED_VIP_ARRIVAL_EVENT) && (e <= IMPROVED_VIP_SERVERS)) {
+            boolean isFromFirstQueue = (serverPriorityClassService.get(e - 1) == 1);
+            if (isFromFirstQueue)
+                classOneTotalPopulation--;
+            else
+                classTwoTotalPopulation--;
+
+            // perquisition service
+            if (serverFirstCompletetion == 0)
+                serverFirstCompletetion = t.current;
+
+            /* update number of completed jobs */
+            indexServer++;
+
+            boolean isAbandon = generateAbandon(r, 120, P6);
+            if (isAbandon) {
+                double abandonTime = t.current + 0.01;
+                abandon.add(abandonTime);
             }
+
+
+            s = e;
+            // Now, there is idle server, so re-generate service time for queued job
+            if (firstClassJobInQueue >= 1) {
+                firstClassJobInQueue--;
+                // GENERATE A SERVICE LESS THAN 10 SECONDS
+                do {
+                    service = m.getService(r, 144, V_P_SR);
+                } while (!(service < 10));
+                serverPriorityClassService.set(s - 1, 1);
+                sum[s].service += service;
+                sum[s].served++;
+                event[s].t = t.current + service;
+                event[s].x = 1;
+            } else if (secondClassJobInQueue >= 1) {
+                secondClassJobInQueue--;
+                // GENERATE A SERVICE GREATER THEN 10 SECONDS
+                do {
+                    service = m.getService(r, 168, V_P_SR);
+                } while ((service < 10));
+                serverPriorityClassService.set(s - 1, 2);
+                sum[s].service += service;
+                sum[s].served++;
+                event[s].t = t.current + service;
+                event[s].x = 1;
+            } else
+                event[s].x = 0;
+        } else {
+            throw new Exception("Unexpected behaviour!");
         }
+    }
 
-        /* BATCH SIMULATION RESULTS */
+    /* BATCH SIMULATION RESULTS */
 
         System.out.println("Completed " + batchCounter + " batches");
 
         System.out.println("");
 
 
-        /* files creation for interval estimation */
-        String directory = "improved_model_batch_reports";
+    /* files creation for interval estimation */
+    String directory = "improved_model_batch_reports";
 
-        writeFile(responseTimes, directory, "vip_response_times");
-        writeFile(interarrivals, directory, "vip_interarrivals");
-        writeFile(delays, directory, "vip_delays");
-        writeFile(populations, directory, "vip_populations");
-        writeFile(abandons, directory, "vip_abandons");
-        writeFile(utilizations, directory, "vip_utilizations");
-        writeFile(serviceTimes, directory, "vip_service_times");
+    writeFile(responseTimes, directory, "vip_response_times");
 
-        /* INTERVAL ESTIMATION */
+    writeFile(interarrivals, directory, "vip_interarrivals");
 
-        Estimate estimate = new Estimate();
+    writeFile(delays, directory, "vip_delays");
 
-        List<String> filenames = List.of("vip_response_times", "vip_interarrivals", "vip_delays", "vip_populations", "vip_abandons", "vip_utilizations", "vip_service_times");
+    writeFile(populations, directory, "vip_populations");
 
-        for (String filename : filenames) {
-            estimate.createInterval(directory, filename);
-        }
+    writeFile(abandons, directory, "vip_abandons");
 
+    writeFile(utilizations, directory, "vip_utilizations");
 
+    writeFile(serviceTimes, directory, "vip_service_times");
+
+    /* INTERVAL ESTIMATION */
+
+    Estimate estimate = new Estimate();
+
+    List<String> filenames = List.of("vip_response_times", "vip_interarrivals", "vip_delays", "vip_populations", "vip_abandons", "vip_utilizations", "vip_service_times");
+
+        for(
+    String filename :filenames)
+
+    {
+        estimate.createInterval(directory, filename);
     }
+
+
+}
+
     // this function generate a true value with (percentage * 100) % probability, oth. false
     static boolean generateAbandon(Rngs rngs, int streamIndex, double percentage) {
         rngs.selectStream(1 + streamIndex);

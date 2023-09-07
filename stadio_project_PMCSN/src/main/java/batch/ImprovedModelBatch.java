@@ -45,7 +45,7 @@ IMRPOVED MODEL EVENTS
 class ImprovedModelBatch {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 3 * 3600;        /* terminal (close the door) time */
+    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -53,7 +53,7 @@ class ImprovedModelBatch {
     public static void main(String[] args) throws Exception {
 
         /* batch simulation parameters */
-        int b = 1024;
+        int b = 1024 * 7;
         int k = 128;
 
         /* lists to save batch data */
@@ -194,8 +194,8 @@ class ImprovedModelBatch {
 
 
         /* sum array initialization (to keep track of services) */
-        MsqSum[] sum = new MsqSum[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION +ALL_EVENTS_SUBSCRIBED_TURNSTILES +  ALL_EVENTS_SUBSCRIBED_PERQUISITION];
-        for (s = 0; s < ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION +ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION; s++) {
+        MsqSum[] sum = new MsqSum[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION];
+        for (s = 0; s < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION; s++) {
             events[s] = new MsqEvent();
             sum[s] = new MsqSum();
         }
@@ -205,11 +205,11 @@ class ImprovedModelBatch {
         t.current = START;
 
         /* generating the first arrival */
-        events[0].t = m.getArrival(r, 11 ,t.current);
+        events[0].t = m.getArrival(r, 11, t.current);
         events[0].x = 1;
 
         /* all other servers are initially idle */
-        for (s = 1; s < ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION +ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION ; s++) {
+        for (s = 1; s < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION; s++) {
             events[s].t = START;
             events[s].x = 0;
             sum[s].service = 0.0;
@@ -276,7 +276,7 @@ class ImprovedModelBatch {
 
                 avgPopulationsTurnstiles.add(areaTurnstiles / turnstilesActualTime);
 
-                for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++)          /* adjust area to calculate */
+                for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++)          /* adjust area to calculate */
                     areaTurnstiles -= sum[s].service;                                                                /* averages for the queue   */
 
                 delaysTurnstiles.add(Math.max(0, areaTurnstiles / indexTurnstiles));
@@ -286,7 +286,7 @@ class ImprovedModelBatch {
                 sumServed = 0.0;
 
 
-                for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++) {
+                for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++) {
                     sumUtilizations += sum[s].service / turnstilesActualTime;
                     sumServices += sum[s].service;
                     sumServed += sum[s].served;
@@ -298,7 +298,7 @@ class ImprovedModelBatch {
                 areaTurnstiles = 0;
                 indexTurnstiles = 0;
 
-                for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES + 1; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++) {
+                for (s = ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES; s <= ALL_EVENTS_TICKET + SERVERS_TURNSTILES; s++) {
                     sum[s].served = 0;
                     sum[s].service = 0;
                 }
@@ -353,33 +353,32 @@ class ImprovedModelBatch {
                 avgPopulationsSubTurnstiles.add(areaSubscribedTurnstiles / subTurnstilesActualTime);
 
                 for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ARRIVAL_EVENT_SUBSCRIBED_TURNSTILES; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES; s++) {
-                    areaSubscribedTurnstiles -= sum[s].service;                                                                /* averages for the queue   */
-
-                    delaysSubTurnstiles.add(Math.max(0, areaSubscribedTurnstiles / indexSubscribedTurnstiles));
-
-                    sumUtilizations = 0.0;
-                    sumServices = 0.0;
-                    sumServed = 0.0;
-
-
-                    for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ARRIVAL_EVENT_SUBSCRIBED_TURNSTILES; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES; s++) {
-                        sumUtilizations += sum[s].service / subTurnstilesActualTime;
-                        sumServices += sum[s].service;
-                        sumServed += sum[s].served;
-                    }
-
-                    utilizationsSubTurnstiles.add(sumUtilizations / SERVERS_SUBSCRIBED_TURNSTILES);
-                    serviceTimesSubTurnstiles.add(sumServices / sumServed);
-
-                    areaTurnstiles = 0;
-                    indexTurnstiles = 0;
-
-                    for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ARRIVAL_EVENT_SUBSCRIBED_TURNSTILES; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES; s++) {
-                        sum[s].served = 0;
-                        sum[s].service = 0;
-                    }
-
+                    areaSubscribedTurnstiles -= sum[s].service;     /* averages for the queue   */
                 }
+
+                delaysSubTurnstiles.add(Math.max(0, areaSubscribedTurnstiles / indexSubscribedTurnstiles));
+
+                sumUtilizations = 0.0;
+                sumServices = 0.0;
+                sumServed = 0.0;
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ARRIVAL_EVENT_SUBSCRIBED_TURNSTILES; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES; s++) {
+                    sumUtilizations += sum[s].service / subTurnstilesActualTime;
+                    sumServices += sum[s].service;
+                    sumServed += sum[s].served;
+                }
+
+                utilizationsSubTurnstiles.add(sumUtilizations / SERVERS_SUBSCRIBED_TURNSTILES);
+                serviceTimesSubTurnstiles.add(sumServices / sumServed);
+
+                areaSubscribedTurnstiles = 0;
+                indexSubscribedTurnstiles = 0;
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ARRIVAL_EVENT_SUBSCRIBED_TURNSTILES; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES; s++) {
+                    sum[s].served = 0;
+                    sum[s].service = 0;
+                }
+
+
 
                 /* SUBSCRIBED PERQUISITION */
 
@@ -389,36 +388,37 @@ class ImprovedModelBatch {
 
                 double subPerquisitionActualTime = t.current - currentBatchStartingTime;
 
-                avgPopulationsSubPerquisition.add(areaSubscribedPerquisition / subPerquisitionActualTime);
+                avgPopulationsSubPerquisition.add(Math.max(0, areaSubscribedPerquisition / subPerquisitionActualTime));
 
                 for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ARRIVAL_EVENT_SUBSCRIBED_PERQUISIION; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION; s++) {
                     areaSubscribedPerquisition -= sum[s].service;                                                                /* averages for the queue   */
-
-                    delaysSubPerquisition.add(areaSubscribedPerquisition / indexSubscribedPerquisition);
-
-                    sumUtilizations = 0.0;
-                    sumServices = 0.0;
-                    sumServed = 0.0;
-
-
-                    for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ARRIVAL_EVENT_SUBSCRIBED_PERQUISIION; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION; s++) {
-                        sumUtilizations += sum[s].service / subPerquisitionActualTime;
-                        sumServices += sum[s].service;
-                        sumServed += sum[s].served;
-                    }
-
-                    utilizationsSubPerquisition.add(sumUtilizations / SERVERS_SUBSCRIBED_PERQUISITION);
-                    serviceTimesSubPerquisition.add(sumServices / sumServed);
-
-                    areaSubscribedPerquisition = 0;
-                    indexSubscribedPerquisition = 0;
-                    abandonsCounterSubscribedPerquisition = 0;
-
-                    for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ARRIVAL_EVENT_SUBSCRIBED_PERQUISIION; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION; s++) {
-                        sum[s].served = 0;
-                        sum[s].service = 0;
-                    }
                 }
+
+                delaysSubPerquisition.add(areaSubscribedPerquisition / indexSubscribedPerquisition);
+
+                sumUtilizations = 0.0;
+                sumServices = 0.0;
+                sumServed = 0.0;
+
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ARRIVAL_EVENT_SUBSCRIBED_PERQUISIION; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION; s++) {
+                    sumUtilizations += sum[s].service / subPerquisitionActualTime;
+                    sumServices += sum[s].service;
+                    sumServed += sum[s].served;
+                }
+
+                utilizationsSubPerquisition.add(sumUtilizations / SERVERS_SUBSCRIBED_PERQUISITION);
+                serviceTimesSubPerquisition.add(sumServices / sumServed);
+
+                areaSubscribedPerquisition = 0;
+                indexSubscribedPerquisition = 0;
+                abandonsCounterSubscribedPerquisition = 0;
+
+                for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ARRIVAL_EVENT_SUBSCRIBED_PERQUISIION; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION; s++) {
+                    sum[s].served = 0;
+                    sum[s].service = 0;
+                }
+
 
                 /* final updates */
                 currentBatchStartingTime = t.current;
@@ -438,7 +438,7 @@ class ImprovedModelBatch {
                 events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].t = skipsPerquisition.get(0);
                 events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].x = 1;
             } else {
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].x = 0;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2].x = 0;
             }
 
             /* abandons */
@@ -450,18 +450,17 @@ class ImprovedModelBatch {
             }
 
 
-
             if (!abandonsPerquisition.isEmpty()) {
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].t = t.current;
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].x = 1;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].t = t.current;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].x = 1;
             } else {
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].x = 0;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1].x = 0;
             }
             if (!abandonsSubscribedPerquisition.isEmpty()) {
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+ ALL_EVENTS_SUBSCRIBED_TURNSTILES+ ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1].t = t.current;
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+ ALL_EVENTS_SUBSCRIBED_TURNSTILES+ ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1].x = 1;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1].t = t.current;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1].x = 1;
             } else {
-                events[ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+ ALL_EVENTS_SUBSCRIBED_TURNSTILES+ ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1].x = 0;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1].x = 0;
             }
 
 
@@ -473,8 +472,8 @@ class ImprovedModelBatch {
             areaTicketCheck += (t.next - t.current) * numberTicketCheck;
             areaTurnstiles += (t.next - t.current) * numberTurnstiles;
             areaPerquisition += (t.next - t.current) * (classOneTotalPopulation + classTwoTotalPopulation);
-            areaSubscribedTurnstiles += (t.next -t.current) * numberSubscribedTurnstiles;
-            areaSubscribedPerquisition += (t.next -t.current) * numberSubscribedPerquisition;
+            areaSubscribedTurnstiles += (t.next - t.current) * numberSubscribedTurnstiles;
+            areaSubscribedPerquisition += (t.next - t.current) * numberSubscribedPerquisition;
 
             t.current = t.next;     /* advance the clock */
 
@@ -529,7 +528,7 @@ class ImprovedModelBatch {
 
                     }
                 }
-            } else if ((e >= ALL_EVENTS_TICKET+ ARRIVAL_EVENT_TURNSTILES ) && (e < ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES + SERVERS_TURNSTILES)) {
+            } else if ((e >= ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES) && (e < ALL_EVENTS_TICKET + ARRIVAL_EVENT_TURNSTILES + SERVERS_TURNSTILES)) {
 
                 /* turnstile service */
                 if (turnstilesFirstCompletion == 0)
@@ -580,8 +579,7 @@ class ImprovedModelBatch {
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
-                    }
-                    else {
+                    } else {
                         try {
                             // big job
                             perquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 2);
@@ -594,31 +592,29 @@ class ImprovedModelBatch {
                     sum[s].served++;
                     events[s].t = t.current + service;
                     events[s].x = 1;
-                }else{
+                } else {
                     //UPDATE THE NUMBER OF JOBS IN QUEUE
-                    if (service<10)
-                        firstClassJobInQueue ++;
+                    if (service < 10)
+                        firstClassJobInQueue++;
                     else secondClassJobInQueue++;
                 }
 
 
             } else if ((e >= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION)
-                    && (e < ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION + SERVERS_PERQUISITION)
+                    && (e < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ARRIVAL_EVENT_PERQUISIION + SERVERS_PERQUISITION)
             ) {
                 // Perquisition service
 
-                boolean isFromFirstQueue = (perquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1)) == 1);
-                boolean isFromSecondQueue = (perquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1)) == 2);
+                boolean isFromFirstQueue = (perquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1)) == 1);
+                boolean isFromSecondQueue = (perquisitionPriorityClassService.get(e - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1)) == 2);
 
                 boolean skip = false;
 
                 if (isFromFirstQueue) {
                     skip = generateSkip(r, 88, classOneTotalPopulation - SERVERS_PERQUISITION);
-                }
-                else if (isFromSecondQueue){
+                } else if (isFromSecondQueue) {
                     skip = generateSkip(r, 99, classTwoTotalPopulation - SERVERS_PERQUISITION);
-                }
-                else{
+                } else {
                     throw new Exception("Unexpected behaviour");
                 }
 
@@ -632,7 +628,7 @@ class ImprovedModelBatch {
                 if (skip) {
                     double skipTime = t.current + 0.01;
                     skipsPerquisition.add(skipTime);
-                    perquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 0);
+                    perquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 0);
 
                 } else {
                     // Update data of second perquisition queue and generate possible abandon
@@ -646,7 +642,7 @@ class ImprovedModelBatch {
                     boolean abandon = generateAbandon(r, 110, P3);
                     if (abandon) {
                         double abandonTime = t.current + 0.02;      // 0.02 not to overlap an eventual skip
-                        perquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 0);
+                        perquisitionPriorityClassService.set(e - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 0);
                         abandonsPerquisition.add(abandonTime);
                     }
                 }
@@ -655,18 +651,18 @@ class ImprovedModelBatch {
 
                 // Now, there is idle server, so re-generate service time for queued job
                 if (firstClassJobInQueue >= 1) {
-                    firstClassJobInQueue --;
+                    firstClassJobInQueue--;
                     // GENERATE A SERVICE LESS THAN 10 SECONDS
                     do {
                         service = m.getService(r, 121, P_SR);
                     } while (!(service < 10));
-                    perquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + 1), 1);
+                    perquisitionPriorityClassService.set(s - (ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + 1), 1);
                     sum[s].service += service;
                     sum[s].served++;
                     events[s].t = t.current + service;
                     events[s].x = 1;
                 } else if (secondClassJobInQueue >= 1) {
-                    secondClassJobInQueue --;
+                    secondClassJobInQueue--;
                     // GENERATE A SERVICE GREATER THEN 10 SECONDS
                     do {
                         service = m.getService(r, 132, P_SR);
@@ -680,20 +676,20 @@ class ImprovedModelBatch {
                     events[s].x = 0;
 
 
-            } else if (e == ALL_EVENTS_TICKET + + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2) {
+            } else if (e == ALL_EVENTS_TICKET + +ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 2) {
                 // perquisition SKIP
                 indexPerquisition++;
                 skipCounterPerquisition++;
                 skipsPerquisition.remove(0);
 
-            } else if (e == ALL_EVENTS_TICKET  + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1) {
+            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION - 1) {
                 /*  perquisition  abandon  */
                 abandonsCounterPerquisition++;
                 abandonsPerquisition.remove(0);
 
-            } else if ( e == ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION ){
+            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION) {
                 // subscriber turnstiles arrival
-                events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION].x = 0;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION].x = 0;
 
                 /* generate an abandon with probability P1 */
                 boolean abandon = generateAbandon(r, 143, P1);
@@ -717,7 +713,7 @@ class ImprovedModelBatch {
                     }
                 }
 
-            } else if ( e >= ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ 1 && e <= ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ SERVERS_SUBSCRIBED_TURNSTILES){
+            } else if (e >= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + 1 && e <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES) {
                 /* subscribed turnstile service */
                 if (subscribedTurnstilesFirstCompletion == 0)
                     subscribedTurnstilesFirstCompletion = t.current;
@@ -726,8 +722,8 @@ class ImprovedModelBatch {
                 numberSubscribedTurnstiles--;
 
                 /* generate an arrival at subscribed perquisition center */
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION +ALL_EVENTS_SUBSCRIBED_TURNSTILES].t = t.current;
-                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION +ALL_EVENTS_SUBSCRIBED_TURNSTILES].x = 1;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES].t = t.current;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES].x = 1;
 
 
                 s = e;
@@ -741,9 +737,9 @@ class ImprovedModelBatch {
                     events[s].x = 0;
                 }
 
-            } else if (e == ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES){
+            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES) {
                 /* subscribed perquisition arrival */
-                events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES].x = 0;
+                events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES].x = 0;
                 numberSubscribedPerquisition++;
                 if (numberSubscribedPerquisition <= SERVERS_SUBSCRIBED_PERQUISITION) {
                     service = m.getService(r, 176, P_SR);
@@ -754,7 +750,7 @@ class ImprovedModelBatch {
                     events[s].x = 1;
 
                 }
-            } else if (e >= ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES+1 && e <= ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES+SERVERS_SUBSCRIBED_PERQUISITION) {
+            } else if (e >= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + 1 && e <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION) {
                 /* subscribed perquisition service */
                 if (subscribedPerquisitionFirstCompletion == 0)
                     subscribedPerquisitionFirstCompletion = t.current;
@@ -778,7 +774,7 @@ class ImprovedModelBatch {
                     /* if there's no queue, deactivate this server */
                     events[s].x = 0;
                 }
-            } else if (e == ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES+ALL_EVENTS_SUBSCRIBED_PERQUISITION-1) {
+            } else if (e == ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1) {
                 /* SUBSCRIBED PERQUISITION ABANDON */
                 abandonsCounterSubscribedPerquisition++;
                 abandonsSubscribedPerquisition.remove(0);
@@ -791,11 +787,11 @@ class ImprovedModelBatch {
                 numberTicketCheck--;
 
                 /*Check if is subscribed*/
-                if(isSubscribed(r, 209, P7)) {
+                if (isSubscribed(r, 209, P7)) {
                     // generate arrival to dedicated queue
-                    events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION].t= t.current;
-                    events[ALL_EVENTS_TICKET+ALL_EVENTS_TURNSTILES+ALL_EVENTS_PERQUISITION].x= 1;
-                }else{
+                    events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION].t = t.current;
+                    events[ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION].x = 1;
+                } else {
                     /* generate an arrival at the turnstiles */
                     events[ALL_EVENTS_TICKET].t = t.current;
                     events[ALL_EVENTS_TICKET].x = 1;
@@ -884,7 +880,7 @@ class ImprovedModelBatch {
                 "response_times_perquisition", "delays_perquisition", "utilizations_perquisition", "interarrivals_perquisition", "abandons_perquisition", "service_times_perquisition", "populations_perquisition", "skips_perquisition",
                 "response_times_sub_turnstiles", "delays_sub_turnstiles", "utilizations_sub_turnstiles", "interarrivals_sub_turnstiles", "service_times_sub_turnstiles", "populations_sub_turnstiles",
                 "response_times_sub_perquisition", "delays_sub_perquisition", "utilizations_sub_perquisition", "interarrivals_sub_perquisition", "abandons_sub_perquisition", "service_times_sub_perquisition", "populations_sub_perquisition"
-                );
+        );
 
         for (String filename : filenames) {
             estimate.createInterval(directory, filename);
@@ -895,7 +891,7 @@ class ImprovedModelBatch {
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
         rngs.selectStream(64);
-        double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
+        double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555) / 100);
         return rngs.random() <= percentage;
     }
 
@@ -941,20 +937,21 @@ class ImprovedModelBatch {
          */
         int s;
 
-        int i = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+1;
+        int i = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + 1;
 
         while (events[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
 
         s = i;
 
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+SERVERS_SUBSCRIBED_TURNSTILES) {         /* now, check the others to find which   */
+        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + SERVERS_SUBSCRIBED_TURNSTILES) {         /* now, check the others to find which   */
             i++;                                                                                             /* has been idle longest                 */
             if ((events[i].x == 0) && (events[i].t < events[s].t))
                 s = i;
         }
         return (s);
     }
+
     /* this function returns the available turnstile server idle longest  */
     int findOneSubscribedPerquisition(MsqEvent[] events) {
         /* -----------------------------------------------------
@@ -963,14 +960,14 @@ class ImprovedModelBatch {
          */
         int s;
 
-        int i = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES;
+        int i = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES;
 
         while (events[i].x == 1)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
 
         s = i;
 
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION+ALL_EVENTS_SUBSCRIBED_TURNSTILES+SERVERS_SUBSCRIBED_PERQUISITION) {         /* now, check the others to find which   */
+        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + SERVERS_SUBSCRIBED_PERQUISITION) {         /* now, check the others to find which   */
             i++;                                                                                             /* has been idle longest                 */
             if ((events[i].x == 0) && (events[i].t < events[s].t))
                 s = i;
@@ -1060,7 +1057,7 @@ class ImprovedModelBatch {
         while (event[i].x == 0)       /* find the index of the first 'active' */
             i++;                        /* element in the event list            */
         e = i;
-        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES+ ALL_EVENTS_SUBSCRIBED_PERQUISITION- 1) {         /* now, check the others to find which  */
+        while (i < ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES + ALL_EVENTS_PERQUISITION + ALL_EVENTS_SUBSCRIBED_TURNSTILES + ALL_EVENTS_SUBSCRIBED_PERQUISITION - 1) {         /* now, check the others to find which  */
             i++;                        /* event type is most imminent          */
             if ((event[i].x == 1) && (event[i].t < event[e].t))
                 e = i;

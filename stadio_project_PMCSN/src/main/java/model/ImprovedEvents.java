@@ -22,12 +22,12 @@ public class ImprovedEvents {
 
     // Turnstiles
     public static int ARRIVAL_EVENT_TURNSTILES = 1;
-    public static int SERVERS_TURNSTILES = 8;
+    public static int SERVERS_TURNSTILES = 7;
 
 
     //  Perquisition
     public static int ARRIVAL_EVENT_PERQUISIION = 1;
-    public static int SERVERS_PERQUISITION = 20;
+    public static int SERVERS_PERQUISITION = 30;
     public static int SKIP_EVENT_SECOND_PERQUISITION = 1;
     public static int ABANDON_EVENT_SECOND_PERQUISITION = 1;
 
