@@ -27,7 +27,7 @@ public class ImprovedEvents {
 
     //  Perquisition
     public static int ARRIVAL_EVENT_PERQUISIION = 1;
-    public static int SERVERS_PERQUISITION = 30;
+    public static int SERVERS_PERQUISITION = 20;
     public static int SKIP_EVENT_SECOND_PERQUISITION = 1;
     public static int ABANDON_EVENT_SECOND_PERQUISITION = 1;
 
