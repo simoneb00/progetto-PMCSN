@@ -744,7 +744,7 @@ public class FiniteHorizonSimulationImprovedModel {
         serviceTimesSubPerquisition.add(sumServices / sumServed);
 
 
-        r.selectStream(256);
+        r.selectStream(255);
         return r.getSeed();
     }
 
@@ -928,7 +928,7 @@ public class FiniteHorizonSimulationImprovedModel {
 
     public static void main(String[] args) throws Exception {
         long[] seeds = new long[1024];
-        seeds[0] = 333;
+        seeds[0] = 123456789;
         Rngs r = new Rngs();
         for (int i = 0; i < 150; i++) {
             seeds[i+1] = simulation(seeds[i], r);

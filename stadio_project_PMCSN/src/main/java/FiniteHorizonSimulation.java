@@ -606,7 +606,7 @@ public class FiniteHorizonSimulation {
 
         skipsCountersSecondPerquisition.add((double) skipCounterSecondPerquisition);
 
-        r.selectStream(256);
+        r.selectStream(255);
         return r.getSeed();
 
     }
