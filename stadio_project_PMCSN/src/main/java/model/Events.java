@@ -14,7 +14,7 @@ public class Events {
 
     //Improved model
     public static int IMPROVED_VIP_ARRIVAL_EVENT = 1;
-    public static int IMPROVED_VIP_SERVERS = 9;
+    public static int IMPROVED_VIP_SERVERS = 3;
     public static int IMPROVED_VIP_ABANDON_EVENT = 1;
 
 

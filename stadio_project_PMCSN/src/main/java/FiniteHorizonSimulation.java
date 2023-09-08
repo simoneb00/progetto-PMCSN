@@ -612,7 +612,7 @@ public class FiniteHorizonSimulation {
     }
 
     static boolean generateSkip(Rngs rngs, int streamIndex, long queueSize) {
-        rngs.selectStream(64);
+        rngs.selectStream(1 + streamIndex);
         double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
 
@@ -621,7 +621,7 @@ public class FiniteHorizonSimulation {
 
     // this function generate a true value with (percentage * 100) % probability, oth. false
     static boolean generateAbandon(Rngs rngs, int streamIndex, double percentage) {
-        rngs.selectStream(128);
+        rngs.selectStream(1 + streamIndex);
         return rngs.random() <= percentage;
     }
 
