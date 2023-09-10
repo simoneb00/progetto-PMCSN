@@ -23,7 +23,6 @@ import model.*;
 import static model.Constants.*;
 import static model.Events.*;
 
-//  TODO  UPDATE THIS WHEN EVENTS CHANGE
 /*
 -TICKET CHECK-
  0: ARRIVO
@@ -54,7 +53,7 @@ class VIPMsqEvent {                     /* the next-event list    */
 
 class VIPMsq {
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = 3 * 3600;        /* terminal (close the door) time todo verification step (put back 3 * 3600)*/
+    static double STOP = 3 * 3600;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -121,7 +120,7 @@ class VIPMsq {
             }
 
             if (!abandonsPerquisition.isEmpty()){
-                event[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);  //TODO migliora
+                event[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);
                 event[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 1;
             } else {
                 event[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 0;
@@ -262,7 +261,6 @@ class VIPMsq {
         double allServed = 0;
 
         for (s = 1; s <= SERVERS_VIP_TICKET; s++) {
-            // todo vedere se con t.current cambia o va meglio
             System.out.print("       " + (s) + "          " + g.format(sum[s].service / ticketCheckActualTime) + "            ");
             System.out.println(f.format(sum[s].service / sum[s].served) + "         " + g.format(sum[s].served / (double) indexTicketCheck));
             allServices += sum[s].service;
@@ -342,7 +340,6 @@ class VIPMsq {
         r.selectStream(0);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        // int index = 0;  // todo verification step (forcing the first timeslot)
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
         return (sarrival);

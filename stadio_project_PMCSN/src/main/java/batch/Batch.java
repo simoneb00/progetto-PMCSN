@@ -44,7 +44,7 @@ class MsqEvent {                     /* the next-event list    */
 public class Batch {
 
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time  todo verification (only one hour)*/
+    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();

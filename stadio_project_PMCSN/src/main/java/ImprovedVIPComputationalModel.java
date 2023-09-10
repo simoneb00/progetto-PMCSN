@@ -9,7 +9,6 @@ import static model.Constants.*;
 import static model.Events.*;
 
 
-//  TODO  UPDATE THIS WHEN EVENTS CHANGE
 /*
 -TICKET CHECK-
  0: ARRIVO
@@ -290,7 +289,6 @@ import static model.Events.*;
         r.selectStream(1 + streamIndex);
 
         int index = TimeSlotController.timeSlotSwitch(slotList, currentTime);
-        // int index = 0;  // todo verification step (forcing the first timeslot)
 
         sarrival += exponential(1 / (slotList.get(index).getAveragePoisson() / 3600), r);
         return (sarrival);

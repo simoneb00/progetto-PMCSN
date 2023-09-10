@@ -15,19 +15,6 @@ import static model.ImprovedEvents.*;
 import static model.ImprovedEvents.SERVERS_VIP_TICKET;
 
 
-//  TODO  UPDATE THIS WHEN EVENTS CHANGE
-/*
--TICKET CHECK-
- 0: ARRIVO
- 1-4: SERVIZIO
- 5: ABBANDONO
-
--PERQUISIZIONI-
- 6: ARRIVO
- 7-11: SERVIZIO
- 12: ABBANDONO
- */
-
 class ImprovedVipModelBatch {
 
     static double START = 0.0;            /* initial (open the door)        */

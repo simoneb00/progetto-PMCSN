@@ -11,7 +11,6 @@ import static model.Events.*;
 import static model.Constants.*;
 
 /*
-TODO: Here there is the event list
 -TICKET CHECK-
 0 = ARRIVO
 1-10 = SERVIZIO

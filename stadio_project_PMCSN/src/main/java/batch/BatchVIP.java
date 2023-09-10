@@ -31,7 +31,7 @@ class VIPMsqEvent {                     /* the next-event list    */
 
 class BatchVIP {
     static double START = 0.0;            /* initial (open the door)        */
-    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time todo verification step (put back 3 * 3600)*/
+    static double STOP = Double.POSITIVE_INFINITY;        /* terminal (close the door) time */
     static double sarrival = START;
 
     static List<TimeSlot> slotList = new ArrayList<>();
@@ -218,7 +218,7 @@ class BatchVIP {
             }
 
             if (!abandonsPerquisition.isEmpty()){
-                events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);  //TODO migliora
+                events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].t = abandonsPerquisition.get(0);
                 events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 1;
             } else {
                 events[ALL_EVENTS_VIP_TICKET + SERVERS_VIP_PERQUISITION + ABANDON_EVENT_VIP_PERQUISITION].x = 0;

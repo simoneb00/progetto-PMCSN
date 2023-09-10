@@ -10,7 +10,6 @@ import static model.ImprovedEvents.*;
 
 import static model.Constants.*;
 
-// TODO  UPDATE THIS WHEN EVENTS CHANGE
 /*
 IMRPOVED MODEL EVENTS
 -TICKET CHECK-
@@ -733,8 +732,6 @@ class ImprovedComputationalModel {
         System.out.println("  avg # in node ...... =   " + f.format(areaSubscribedPerquisition / subscribedPerquisitionActualTime));
 
         System.out.println("# abandons: " + abandonsCounterSubscribedPerquisition);
-        // todo add or not skip to subscribed perquisition?
-        // System.out.println("# skips: " + skipCounterPerquisition);
 
         for (s = ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES+ ALL_EVENTS_PERQUISITION+ ALL_EVENTS_SUBSCRIBED_TURNSTILES+ ARRIVAL_EVENT_SUBSCRIBED_PERQUISIION; s <= ALL_EVENTS_TICKET + ALL_EVENTS_TURNSTILES+ ALL_EVENTS_PERQUISITION+ ALL_EVENTS_SUBSCRIBED_TURNSTILES+ SERVERS_SUBSCRIBED_PERQUISITION; s++)
             /* adjust area to calculate */
