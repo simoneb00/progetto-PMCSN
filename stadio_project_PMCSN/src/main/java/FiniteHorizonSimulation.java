@@ -26,6 +26,11 @@ public class FiniteHorizonSimulation {
      */
 
     /* lists for statistics */
+    static List<Double> ticketCheckIndexes = new ArrayList<>();
+    static List<Double> firstPerquisitionIndexes = new ArrayList<>();
+    static List<Double> turnstilesIndexes = new ArrayList<>();
+    static List<Double> secondPerquisitionIndexes = new ArrayList<>();
+
     static List<Double> ticketCheckRTs = new ArrayList<>();
     static List<Double> firstPerquisitionRTs = new ArrayList<>();
     static List<Double> turnstilesRTs = new ArrayList<>();
@@ -494,7 +499,7 @@ public class FiniteHorizonSimulation {
 
         ticketCheckUtilizations.add(sumUtilizations / SERVERS_TICKET);
         ticketCheckSTs.add(sumServices / sumServed);
-
+        ticketCheckIndexes.add((double)indexTicketCheck);
 
         /* FIRST PERQUISITION */
 
@@ -532,6 +537,7 @@ public class FiniteHorizonSimulation {
         firstPerquisitionSTs.add(sumServices / sumServed);
 
         skipsCountersFirstPerquisition.add((double) skipCounterFirstPerquisition);
+        firstPerquisitionIndexes.add((double)indexFirstPerquisition);
 
         /* TURNSTILES */
 
@@ -567,7 +573,7 @@ public class FiniteHorizonSimulation {
         }
         turnstilesUtilizations.add(sumUtilizations / SERVERS_TURNSTILES);
         turnstilesSTs.add(sumServices / sumServed);
-
+        turnstilesIndexes.add((double)indexTurnstiles);
 
         /* SECOND PERQUISITION */
 
@@ -605,6 +611,8 @@ public class FiniteHorizonSimulation {
         secondPerquisitionSTs.add(sumServices / sumServed);
 
         skipsCountersSecondPerquisition.add((double) skipCounterSecondPerquisition);
+        secondPerquisitionIndexes.add((double)indexSecondPerquisition);
+
 
         r.selectStream(255);
         return r.getSeed();
@@ -615,7 +623,6 @@ public class FiniteHorizonSimulation {
         rngs.selectStream(1 + streamIndex);
         double percentage = Math.min(0.8, (0.444444 * queueSize - 291.555555)/100);
         return rngs.random() <= percentage;
-
     }
 
 
@@ -765,11 +772,6 @@ public class FiniteHorizonSimulation {
         }
 
 
-        System.out.println(ticketCheckUtilizations);
-        System.out.println(firstPerquisitionUtilizations);
-        System.out.println(turnstilesUtilizations);
-        System.out.println(secondPerquisitionUtilizations);
-
         /* TICKET CHECK */
         writeFile(ticketCheckDelays, "replication_reports", "delays_ticket_check");
         writeFile(ticketCheckRTs,"replication_reports", "response_times_ticket_check");
@@ -777,6 +779,7 @@ public class FiniteHorizonSimulation {
         writeFile(ticketCheckPopulations,"replication_reports", "populations_ticket_check");
         writeFile(ticketCheckInterarrivals,"replication_reports", "interarrivals_ticket_check");
         writeFile(ticketCheckSTs, "replication_reports", "service_times_ticket_check");
+        writeFile(ticketCheckIndexes, "replication_reports", "indexes_ticket_check");
 
         /* FIRST PERQUISITION */
         writeFile(firstPerquisitionDelays, "replication_reports", "delays_first_perquisition");
@@ -787,6 +790,7 @@ public class FiniteHorizonSimulation {
         writeFile(firstPerquisitionSTs, "replication_reports", "service_times_first_perquisition");
         writeFile(firstPerquisitionQueuePopulations, "replication_reports", "queue_populations_first_perquisition");
         writeFile(skipsCountersFirstPerquisition, "replication_reports", "skips_first_perquisition");
+        writeFile(firstPerquisitionIndexes, "replication_reports", "indexes_first_perquisition");
 
         /* TURNSTILES */
         writeFile(turnstilesDelays, "replication_reports", "delays_turnstiles");
@@ -795,6 +799,7 @@ public class FiniteHorizonSimulation {
         writeFile(turnstilesPopulations, "replication_reports", "populations_turnstiles");
         writeFile(turnstilesInterarrivals, "replication_reports", "interarrivals_turnstiles");
         writeFile(turnstilesSTs, "replication_reports", "service_times_turnstiles");
+        writeFile(turnstilesIndexes, "replication_reports", "indexes_turnstiles");
 
         /* SECOND PERQUISITION */
         writeFile(secondPerquisitionDelays, "replication_reports", "delays_second_perquisition");
@@ -805,16 +810,18 @@ public class FiniteHorizonSimulation {
         writeFile(secondPerquisitionSTs, "replication_reports", "service_times_second_perquisition");
         writeFile(secondPerquisitionQueuePopulations, "replication_reports", "queue_populations_second_perquisition");
         writeFile(skipsCountersSecondPerquisition, "replication_reports", "skips_second_perquisition");
+        writeFile(secondPerquisitionIndexes, "replication_reports", "indexes_second_perquisition");
+
 
 
         /* INTERVAL ESTIMATION */
 
         Estimate estimate = new Estimate();
 
-        List<String> filenames = List.of("response_times_ticket_check", "delays_ticket_check", "utilizations_ticket_check", "interarrivals_ticket_check", "service_times_ticket_check", "populations_ticket_check",
-                "response_times_first_perquisition", "delays_first_perquisition", "utilizations_first_perquisition", "interarrivals_first_perquisition", "service_times_first_perquisition", "populations_first_perquisition", "queue_populations_first_perquisition", "skips_first_perquisition",
-                "response_times_turnstiles", "delays_turnstiles", "utilizations_turnstiles", "interarrivals_turnstiles", "service_times_turnstiles", "populations_turnstiles",
-                "response_times_second_perquisition", "delays_second_perquisition", "utilizations_second_perquisition", "interarrivals_second_perquisition", "service_times_second_perquisition", "populations_second_perquisition", "queue_populations_second_perquisition", "skips_second_perquisition"
+        List<String> filenames = List.of("response_times_ticket_check", "delays_ticket_check", "utilizations_ticket_check", "interarrivals_ticket_check", "service_times_ticket_check", "populations_ticket_check", "indexes_ticket_check",
+                "response_times_first_perquisition", "delays_first_perquisition", "utilizations_first_perquisition", "interarrivals_first_perquisition", "service_times_first_perquisition", "populations_first_perquisition", "queue_populations_first_perquisition", "skips_first_perquisition", "indexes_first_perquisition",
+                "response_times_turnstiles", "delays_turnstiles", "utilizations_turnstiles", "interarrivals_turnstiles", "service_times_turnstiles", "populations_turnstiles", "indexes_turnstiles",
+                "response_times_second_perquisition", "delays_second_perquisition", "utilizations_second_perquisition", "interarrivals_second_perquisition", "service_times_second_perquisition", "populations_second_perquisition", "queue_populations_second_perquisition", "skips_second_perquisition", "indexes_second_perquisition"
         );
 
         for (String filename : filenames) {

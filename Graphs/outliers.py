@@ -8,9 +8,11 @@ def find_outliers_IQR(data, threshold=1.5):
     # Calcola la soglia inferiore e superiore
     lower_bound = Q1 - (threshold * IQR)
     upper_bound = Q3 + (threshold * IQR)
+    return lower_bound, upper_bound
+
     # Identifica gli outlier
-    outliers = [x for x in data if x < lower_bound or x > upper_bound]
-    return outliers
+    # outliers = [x for x in data if x < lower_bound or x > upper_bound]
+    # return outliers
 
 
 if __name__ == "__main__":

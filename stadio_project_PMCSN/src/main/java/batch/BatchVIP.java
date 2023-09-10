@@ -39,8 +39,8 @@ class BatchVIP {
     public static void main(String[] args) {
 
         /* batch simulation parameters */
-        int b = 128;
-        int k = 30;
+        int b = 128*8;
+        int k = 50;
 
         double currentBatchStartingTime = 0;
         double currentFirstArrivalTimeTC = 0;
@@ -132,7 +132,7 @@ class BatchVIP {
                 for (s = 1; s <= SERVERS_VIP_TICKET; s++)          /* adjust area to calculate */
                     areaTicketCheck -= sum[s].service;                 /* averages for the queue   */
 
-                delaysTicketCheck.add(areaTicketCheck / indexTicketCheck);
+                delaysTicketCheck.add(Math.max(0, areaTicketCheck / indexTicketCheck));
 
                 double sumUtilizations = 0.0;
                 double sumServices = 0.0;
