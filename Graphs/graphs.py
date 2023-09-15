@@ -20,6 +20,39 @@ def read_data(file_path):
     return x, y
 
 
+def plot_access_times():
+    # Inizializza le liste per memorizzare i dati
+    tempi_di_risposta = []
+
+    # Leggi i dati dal file "access_times.dat"
+    with open("../simulation/access_times.dat", "r") as file:
+        for line in file:
+            tempo = float(line.strip())  # Assumiamo che ogni riga contenga un valore numerico
+            tempi_di_risposta.append(tempo)
+
+    print(sum(tempi_di_risposta)/len(tempi_di_risposta))
+    # Crea una lista di indici consecutivi
+    tempi = [(i + 1) * 5 for i in range(0, len(tempi_di_risposta))]
+    intervallo_x = [i * 10 for i in range(1, 23)]
+    intervallo_y = [i * 50 for i in range(1, 41)]
+
+    plt.figure(figsize=(8, len(intervallo_y)*0.3))
+
+    # Crea il grafico
+    plt.plot(tempi, tempi_di_risposta, marker='o', linestyle='-')
+    plt.xlabel('Tempo [min]')
+    plt.ylabel('Tempo di Risposta [sec]')
+    plt.title('Grafico dei Tempi di Risposta')
+
+    plt.xticks(intervallo_x, intervallo_x)
+    plt.xticks(rotation = 45)
+    plt.yticks(intervallo_y, intervallo_y)
+    plt.grid(True)
+
+    # Mostra il grafico
+    plt.show()
+
+
 def plot(file_path, statistic, node):
     try:
         with open(file_path, 'r') as file:
@@ -45,6 +78,9 @@ def plot(file_path, statistic, node):
 
 if __name__ == "__main__":
 
+    plot_access_times()
+
+    """
     response_time = "Tempo di Risposta"
     utilization = "Utilizzazione"
     ticket_check = "Controllo biglietti"
@@ -52,7 +88,7 @@ if __name__ == "__main__":
     turnstiles = "Tornelli"
     second_perquisition = "Seconda perquisizione"
 
-    """
+    
     plot("../batch_reports/response_times_ticket_check.dat", response_time, ticket_check)
     plot("../batch_reports/response_times_first_perquisition.dat", response_time, first_perquisition)
     plot("../batch_reports/response_times_turnstiles.dat", response_time, turnstiles)
@@ -61,7 +97,7 @@ if __name__ == "__main__":
     plot("../batch_reports/utilizations_first_perquisition.dat", utilization, first_perquisition)
     plot("../batch_reports/utilizations_turnstiles.dat", utilization, turnstiles)
     plot("../batch_reports/utilizations_second_perquisition.dat", utilization, second_perquisition)
-    """
+    
 
     file_paths = ['../experiments/ticket_check_rt.dat', '../experiments/first_perquisition_rt.dat', '../experiments/turnstiles_rt.dat', '../experiments/second_perquisition_rt.dat', '../experiments/total_rt.dat']
 
@@ -92,3 +128,4 @@ if __name__ == "__main__":
 
     # Display the plot
     plt.show()
+    """
